@@ -9,7 +9,7 @@ def scale_image (corrected_image, atlas_image):
 
     image_clipped = clip_image_intensity(image_array,lower_threshold=lower_threshold, upper_threshold=upper_threshold)
 
-    lower_atlas_threshold, upper_atlas_threshold = get_atlas_thresholds(atlas_image)
+    lower_atlas_threshold, upper_atlas_threshold = get_atlas_thresholds(None)
 
     image_scaled = scale_image_linearly(image_clipped,lower_atlas_threshold,upper_atlas_threshold)
 
@@ -34,7 +34,7 @@ def clip_image_intensity(image:np.ndarray,lower_threshold,upper_threshold):
 
 def get_atlas_thresholds(atlas_image,lower_bound=0.02,upper_bound=99.8):
     
-    #if atlas_path is None: return (0.05545412003993988, 92.05744171142578) #for 0.02 and 99.8
+    if atlas_image is None: return (0.05545412003993988, 92.05744171142578) #for 0.02 and 99.8
 
     fixed = atlas_image
     return get_percentiles(fixed,lower_bound=lower_bound, upper_bound = upper_bound)

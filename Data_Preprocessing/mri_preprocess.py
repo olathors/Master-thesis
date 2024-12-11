@@ -1,12 +1,12 @@
 import ants
 import dicom2nifti
 import numpy as np
-from Data_Preprocessing.mri_biascorrect import convert_and_correct
+from mri_biascorrect import convert_and_correct
 from mri_scale import scale_image
 from mri_register import register_image
 from mri_crop import crop_image
 
-def preprocess(in_path, out_path, image_name):
+def preprocess_image(in_path, out_path, image_name):
 
     corrected_image = convert_and_correct(in_path)
 

@@ -1,4 +1,5 @@
 import ants
+import numpy as np
 
 
 def crop_image(registered_image):

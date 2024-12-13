@@ -5,11 +5,11 @@ def scale_image (corrected_image, atlas_image):
 
     image_array = corrected_image.numpy()
 
-    lower_threshold,upper_threshold = get_percentiles(image_array)
+    lower_threshold, upper_threshold = get_percentiles(image_array)
 
-    image_clipped = clip_image_intensity(image_array,lower_threshold=lower_threshold, upper_threshold=upper_threshold)
+    image_clipped = clip_image_intensity(image_array, lower_threshold, upper_threshold)
 
-    lower_atlas_threshold, upper_atlas_threshold = get_atlas_thresholds(None)
+    lower_atlas_threshold, upper_atlas_threshold = get_atlas_thresholds(atlas_image)
 
     image_scaled = scale_image_linearly(image_clipped,lower_atlas_threshold,upper_atlas_threshold)
 
@@ -17,24 +17,25 @@ def scale_image (corrected_image, atlas_image):
 
     return moving_image
 
-def get_percentiles(img,lower_bound=0.02,upper_bound = 99.8):
-    img_flatten = img.ravel()
-    lower_perc = np.percentile(img_flatten,q=lower_bound)
-    upper_perc = np.percentile(img_flatten,q=upper_bound)
-    return lower_perc,upper_perc
+def get_percentiles(img):
 
-def scale_image_linearly(img_array:np.ndarray,lower_bound,upper_bound):
-    img_array = (img_array - lower_bound) / (upper_bound - lower_bound)
-    return img_array
+    flat_image = img.ravel()
+    lower_percentile = np.percentile(flat_image,0.02)
+    upper_percentile = np.percentile(flat_image,99.8)
+    return lower_percentile, upper_percentile
 
-def clip_image_intensity(image:np.ndarray,lower_threshold,upper_threshold):
+def scale_image_linearly(image_array, lower_threshold, upper_threshold):
+
+    scaled_image = (image_array - lower_threshold) / (upper_threshold - lower_threshold)
+    return scaled_image
+
+def clip_image_intensity(image,lower_threshold,upper_threshold):
+
     image[image > upper_threshold] = upper_threshold
     image[image < lower_threshold] = lower_threshold
     return image
 
-def get_atlas_thresholds(atlas_image,lower_bound=0.02,upper_bound=99.8):
-    
-    if atlas_image is None: return (0.05545412003993988, 92.05744171142578) #for 0.02 and 99.8
+def get_atlas_thresholds(atlas_image):
 
-    fixed = atlas_image
-    return get_percentiles(fixed,lower_bound=lower_bound, upper_bound = upper_bound)
+    atlas_array = atlas_image.numpy()
+    return get_percentiles(atlas_array)

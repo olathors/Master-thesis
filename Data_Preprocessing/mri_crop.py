@@ -8,6 +8,9 @@ def crop_image(registered_image):
     lower_dim = [int(x - 50) for x in center_dim]
     upper_dim = [int(x + 50) for x in center_dim]
 
+
+    #169×208×179
+
     cropped_image =  ants.crop_indices(registered_image,lowerind = lower_dim,upperind = upper_dim)
 
     return cropped_image

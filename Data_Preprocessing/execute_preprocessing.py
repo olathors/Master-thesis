@@ -5,14 +5,14 @@ import time
 import zipfile
 import shutil
 
-def main(in_data, images):
+def main(in_data, images, global_time, process_no):
 
     data = np.load(images,allow_pickle='TRUE').item()
 
     atlas_image = ants.image_read('//Users/olath/Downloads/mni_icbm152_nlin_sym_09a_nifti/mni_icbm152_nlin_sym_09a/mni_icbm152_t1_tal_nlin_sym_09a.nii')
     counter = 0
     images_left = len(data)
-    global_time = time.time()
+    
 
     archive = zipfile.ZipFile(in_data)
 
@@ -31,11 +31,22 @@ def main(in_data, images):
         global_time_spent = (time.time() - global_time) / 60
         print ('Processed image nr:',counter,'- id:',key, 'in %.2f' % local_time_spent ,"seconds.")
         print('There are', images_left, 'images left to preprocess.')
-        print('Total time spent is %.2f' % global_time_spent, "minutes.")
+        print('Total time spent is %.2f' % global_time_spent, "minutes of process no:", process_no)
         print('\n')
 
         shutil.rmtree('temp_folder')
 
 
 
-main('/Volumes/Extreme SSD/Download/Download_collection1.zip', "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_with_paths_file_1.npy")
+global_time = time.time()
+
+main('/Volumes/Extreme SSD/Download/Download_collection1.zip', "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_with_paths_file_1.npy", global_time, 1)
+main('/Volumes/Extreme SSD/Download/Download_collection2.zip', "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_with_paths_file_2.npy", global_time, 2)
+main('/Volumes/Extreme SSD/Download/Download_collection3.zip', "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_with_paths_file_3.npy", global_time, 3)
+main('/Volumes/Extreme SSD/Download/Download_collection4.zip', "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_with_paths_file_4.npy", global_time, 4)
+main('/Volumes/Extreme SSD/Download/Download_collection5.zip', "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_with_paths_file_5.npy", global_time, 5)
+main('/Volumes/Extreme SSD/Download/Download_collection6.zip', "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_with_paths_file_6.npy", global_time, 6)
+main('/Volumes/Extreme SSD/Download/Download_collection7.zip', "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_with_paths_file_7.npy", global_time, 7)
+main('/Volumes/Extreme SSD/Download/Download_collection8.zip', "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_with_paths_file_8.npy", global_time, 8)
+main('/Volumes/Extreme SSD/Download/Download_collection_dataset.zip', "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_with_paths_file_9.npy", global_time, 9)
+main('/Volumes/Extreme SSD/Download/Download_collection0.zip', "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_with_paths_file_0.npy", global_time, 10)

@@ -1,52 +1,59 @@
 from mri_preprocess import preprocess_image
+from mri_preprocessed_fetch import get_preprocessed_imagenames
 import ants
 import numpy as np
 import time
 import zipfile
 import shutil
 
-def main(in_data, images, global_time, process_no):
+def main(in_data, images, out_path, global_time, process_no):
 
-    data = np.load(images,allow_pickle='TRUE').item()
+    relevant_image_names = np.load(images,allow_pickle='TRUE').item()
+    atlas_image = ants.image_read('/Volumes/Extreme SSD/Download/mni_icbm152_nlin_sym_09c/mni_icbm152_t1_tal_nlin_sym_09c.nii')
+    images_preprocessed_counter = 0
+    running_average = 0
+    current_image_no = 0
+    images_left_counter = len(relevant_image_names)
+    images_already_preprocessed = get_preprocessed_imagenames(out_path)
+    raw_image_archive = zipfile.ZipFile(in_data)
 
-    atlas_image = ants.image_read('//Users/olath/Downloads/mni_icbm152_nlin_sym_09a_nifti/mni_icbm152_nlin_sym_09a/mni_icbm152_t1_tal_nlin_sym_09a.nii')
-    counter = 0
-    images_left = len(data)
-    
+    shutil.rmtree('temp_folder')
 
-    archive = zipfile.ZipFile(in_data)
+    for key in relevant_image_names:
 
-    for key in data:
-        local_time = time.time()
+        current_image_no += 1
+        images_left_counter -= 1
 
-        for file in archive.namelist():
-            if file.endswith('I'+key+'.dcm'):
-                archive.extract(file, 'temp_folder')
+        if (str(key)+'.nii.gz') in images_already_preprocessed:
+            print('Image',current_image_no,'already preprocessed')
 
-
-        preprocess_image('temp_folder', '/Users/olath/Documents/GitHub/Master-thesis/Data_Preprocessing/test_data/', 'I'+str(key), atlas_image)
-        counter += 1
-        images_left -= 1
-        local_time_spent = (time.time() - local_time)
-        global_time_spent = (time.time() - global_time) / 60
-        print ('Processed image nr:',counter,'- id:',key, 'in %.2f' % local_time_spent ,"seconds.")
-        print('There are', images_left, 'images left to preprocess.')
-        print('Total time spent is %.2f' % global_time_spent, "minutes of process no:", process_no)
-        print('\n')
-
-        shutil.rmtree('temp_folder')
+        else:
+            local_time = time.time()
 
 
+            for file in raw_image_archive.namelist():
+                if file.endswith('I'+key+'.dcm'):
+                    raw_image_archive.extract(file, 'temp_folder')
+
+            preprocess_image('temp_folder', out_path, str(key), atlas_image)
+
+            images_preprocessed_counter += 1
+            local_time_spent = (time.time() - local_time)
+            global_time_spent = (time.time() - global_time) / 60
+            running_average = global_time_spent / images_preprocessed_counter
+
+            print('\n')
+            print ('Processed image nr:',current_image_no,'- id:',key, 'in %.2f' % local_time_spent ,"seconds.")
+            print('There are', images_left_counter, 'images left of this batch to preprocess.')
+            print('Total time spent is %.2f' % global_time_spent, "minutes of batch no:", process_no)
+            print('At this speed, this batch will finish in %.2f' % (running_average * images_left_counter) ,'minutes.')
+
+            shutil.rmtree('temp_folder')
 
 global_time = time.time()
 
-main('/Volumes/Extreme SSD/Download/Download_collection1.zip', "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_with_paths_file_1.npy", global_time, 1)
-main('/Volumes/Extreme SSD/Download/Download_collection2.zip', "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_with_paths_file_2.npy", global_time, 2)
-main('/Volumes/Extreme SSD/Download/Download_collection3.zip', "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_with_paths_file_3.npy", global_time, 3)
-main('/Volumes/Extreme SSD/Download/Download_collection4.zip', "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_with_paths_file_4.npy", global_time, 4)
-main('/Volumes/Extreme SSD/Download/Download_collection5.zip', "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_with_paths_file_5.npy", global_time, 5)
-main('/Volumes/Extreme SSD/Download/Download_collection6.zip', "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_with_paths_file_6.npy", global_time, 6)
-main('/Volumes/Extreme SSD/Download/Download_collection7.zip', "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_with_paths_file_7.npy", global_time, 7)
-main('/Volumes/Extreme SSD/Download/Download_collection8.zip', "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_with_paths_file_8.npy", global_time, 8)
-main('/Volumes/Extreme SSD/Download/Download_collection_dataset.zip', "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_with_paths_file_9.npy", global_time, 9)
-main('/Volumes/Extreme SSD/Download/Download_collection0.zip', "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_with_paths_file_0.npy", global_time, 10)
+in_path = '/Volumes/Extreme SSD/Download/Download_collection1.zip'
+image_list_path = "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_with_paths_file_1.npy"
+out_path = '/Volumes/Extreme SSD/ADNI_PROCESSED/'
+
+main(in_path, image_list_path, out_path, global_time, 1)

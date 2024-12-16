@@ -5,6 +5,7 @@ import numpy as np
 import time
 import zipfile
 import shutil
+import os
 
 def main(in_data, images, out_path, global_time, process_no):
 
@@ -17,7 +18,8 @@ def main(in_data, images, out_path, global_time, process_no):
     images_already_preprocessed = get_preprocessed_imagenames(out_path)
     raw_image_archive = zipfile.ZipFile(in_data)
 
-    shutil.rmtree('temp_folder')
+    if os.path.exists('/Users/olath/Documents/GitHub/Master-thesis/Data_Preprocessing/temp_folder'):
+        shutil.rmtree('temp_folder')
 
     for key in relevant_image_names:
 

@@ -10,7 +10,7 @@ def preprocess_image(in_path, out_path, image_name, atlas_image):
 
     #Converts input series to NIFTI, then ANTS image and preforms bias field correction.
 
-    corrected_image = convert_and_correct(in_path)
+    corrected_image = convert_and_correct(in_path, image_name)
 
     #Scales the input image according to the atlas, mostly stolen from Lucas
 

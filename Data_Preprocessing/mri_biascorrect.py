@@ -1,9 +1,15 @@
 import dicom2nifti
 import ants
+from dicom2nifti.exceptions import ConversionValidationError
     
-def convert_and_correct(in_path):
+def convert_and_correct(in_path, image_name):
 
-    dicom2nifti.dicom_series_to_nifti(in_path, 'temp.nii.gz', reorient_nifti=True)
+    try:
+        dicom2nifti.dicom_series_to_nifti(in_path, 'temp.nii.gz', reorient_nifti=True)
+    except Exception as err:
+        logf = open("conversion.log", "a")
+        logf.write(("Failed to convert {0}: {1}\n".format(image_name, str(err))))
+        logf.close()
 
     #Reads the NIFTI image as an ANTS image.
 

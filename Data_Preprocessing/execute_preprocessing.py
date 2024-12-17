@@ -15,6 +15,7 @@ def main(in_data, images, out_path, global_time, process_no):
     running_average = 0
     current_image_no = 0
     images_left_counter = len(relevant_image_names)
+    total_images = len(relevant_image_names)
     images_already_preprocessed = get_preprocessed_imagenames(out_path)
     raw_image_archive = zipfile.ZipFile(in_data)
 
@@ -43,8 +44,10 @@ def main(in_data, images, out_path, global_time, process_no):
             local_time_spent = (time.time() - local_time)
             global_time_spent = (time.time() - global_time) / 60
             running_average = global_time_spent / images_preprocessed_counter
+            percentage = 100 * float(current_image_no)/float(total_images)
 
             print('\n')
+            print('Preprocessing batch', process_no, 'out of 10 is %.0f' % percentage,'%','complete.')
             print ('Processed image nr:',current_image_no,'- id:',key, 'in %.2f' % local_time_spent ,"seconds.")
             print('There are', images_left_counter, 'images left of this batch to preprocess.')
             print('Total time spent is %.2f' % global_time_spent, "minutes of batch no:", process_no)
@@ -54,8 +57,8 @@ def main(in_data, images, out_path, global_time, process_no):
 
 global_time = time.time()
 
-in_path = '/Volumes/Extreme SSD/Download/Download_collection1.zip'
-image_list_path = "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_with_paths_file_1.npy"
+in_path = '/Volumes/Extreme SSD/Download/Download_collection.zip'
+image_list_path = "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_with_paths_file_0.npy"
 out_path = '/Volumes/Extreme SSD/ADNI_PROCESSED/'
 
-main(in_path, image_list_path, out_path, global_time, 1)
+main(in_path, image_list_path, out_path, global_time, 2)

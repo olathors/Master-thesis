@@ -1,17 +1,21 @@
 import os
 from mri_slice import slice_image 
 from PIL import Image
-from matplotlib import pyplot as plt
-import torch
 import numpy as np
 import shutil
+import time
 
-def main(in_path, out_path):
+def main(in_path, out_path, global_time):
 
     for subdir, dirs, files in os.walk(in_path):
+
+        total_images_to_slice = len(files)
+        total_images_sliced = 0
+        percentage = 0
+
         for file in files:
             slices = slice_image(in_path, file)
-            image_name = file[:-7]
+            image_name = file[:-7]        
 
             os.makedirs('temp_slicing_folder'+'/saggital')
             os.makedirs('temp_slicing_folder'+'/coronal')
@@ -37,7 +41,18 @@ def main(in_path, out_path):
                 im = im.convert('L')
                 im.save('temp_slicing_folder'+'/axial/'+str(i)+'.png')
 
+            total_images_sliced += 1
+            prev_percentage = percentage
+            percentage = round(100 * float(total_images_sliced)/float(total_images_to_slice))
+
+            if prev_percentage != percentage:
+                time_spent = (time.time() - global_time)/60
+                time_remaining = (time_spent/percentage) * (100 - percentage)
+                print('Slicing images is %.0f' % percentage,'%','complete and will finish in %.2f' % time_remaining, 'minutes. ')
+
             shutil.make_archive(out_path+image_name, 'zip', 'temp_slicing_folder')
             shutil.rmtree('temp_slicing_folder')
-                
-main('/Volumes/Extreme SSD/ADNI_PROCESSED/', '/Volumes/Extreme SSD/ADNI_SLICED/')
+
+global_time = time.time()
+
+main('/Volumes/Extreme SSD/ADNI_PROCESSED/', '/Volumes/Extreme SSD/ADNI_SLICED/', global_time)

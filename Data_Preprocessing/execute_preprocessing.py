@@ -57,8 +57,8 @@ def main(in_data, images, out_path, global_time, process_no):
 
 global_time = time.time()
 
-in_path = '/Volumes/Extreme SSD/Download/images_paths/Download_collection3.zip'
-image_list_path = "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_with_paths_file_3.npy"
+in_path = '/Volumes/Extreme SSD/Download/Download_collection3.zip'
+image_list_path = "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_paths/images_with_paths_file_3.npy"
 out_path = '/Volumes/Extreme SSD/ADNI_PROCESSED/'
 
 main(in_path, image_list_path, out_path, global_time, 4)

@@ -33,12 +33,20 @@ def main(in_data, images, out_path, global_time, process_no):
         else:
             local_time = time.time()
 
+            try:
+                for file in raw_image_archive.namelist():
+                    if file.endswith('I'+key+'.dcm'):
+                        raw_image_archive.extract(file, 'temp_folder')
 
-            for file in raw_image_archive.namelist():
-                if file.endswith('I'+key+'.dcm'):
-                    raw_image_archive.extract(file, 'temp_folder')
+                preprocess_image('temp_folder', out_path, str(key), atlas_image)
 
-            preprocess_image('temp_folder', out_path, str(key), atlas_image)
+            except Exception as err:
+
+                logf = open("conversion.log", "a")
+                logf.write(("Failed to convert {0}: {1}\n".format(str(key), str(err))))
+                logf.close()
+
+            
 
             images_preprocessed_counter += 1
             local_time_spent = (time.time() - local_time)
@@ -57,8 +65,48 @@ def main(in_data, images, out_path, global_time, process_no):
 
 global_time = time.time()
 
-in_path = '/Volumes/Extreme SSD/Download/Download_collection3.zip'
-image_list_path = "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_paths/images_with_paths_file_3.npy"
+in_path = '/Volumes/Extreme SSD/Download/Download_collection4.zip'
+image_list_path = "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_paths/images_with_paths_file_4.npy"
 out_path = '/Volumes/Extreme SSD/ADNI_PROCESSED/'
 
-main(in_path, image_list_path, out_path, global_time, 4)
+main(in_path, image_list_path, out_path, global_time, 5)
+
+in_path = '/Volumes/Extreme SSD/Download/Download_collection5.zip'
+image_list_path = "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_paths/images_with_paths_file_5.npy"
+out_path = '/Volumes/Extreme SSD/ADNI_PROCESSED/'
+
+global_time = time.time()
+
+main(in_path, image_list_path, out_path, global_time, 6)
+
+in_path = '/Volumes/Extreme SSD/Download/Download_collection6.zip'
+image_list_path = "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_paths/images_with_paths_file_6.npy"
+out_path = '/Volumes/Extreme SSD/ADNI_PROCESSED/'
+
+global_time = time.time()
+
+main(in_path, image_list_path, out_path, global_time, 7)
+
+in_path = '/Volumes/Extreme SSD/Download/Download_collection7.zip'
+image_list_path = "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_paths/images_with_paths_file_7.npy"
+out_path = '/Volumes/Extreme SSD/ADNI_PROCESSED/'
+
+global_time = time.time()
+
+main(in_path, image_list_path, out_path, global_time, 8)
+
+in_path = '/Volumes/Extreme SSD/Download/Download_collection8.zip'
+image_list_path = "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_paths/images_with_paths_file_8.npy"
+out_path = '/Volumes/Extreme SSD/ADNI_PROCESSED/'
+
+global_time = time.time()
+
+main(in_path, image_list_path, out_path, global_time, 9)
+
+in_path = '/Volumes/Extreme SSD/Download/Download_collection_dataset.zip'
+image_list_path = "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_paths/images_with_paths_file_9.npy"
+out_path = '/Volumes/Extreme SSD/ADNI_PROCESSED/'
+
+global_time = time.time()
+
+main(in_path, image_list_path, out_path, global_time, 10)

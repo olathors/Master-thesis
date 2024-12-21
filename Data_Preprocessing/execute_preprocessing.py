@@ -34,8 +34,12 @@ def main(in_data, images, out_path, global_time, process_no):
             local_time = time.time()
 
             try:
+                os.makedirs('temp_folder')
+
                 for file in raw_image_archive.namelist():
-                    if file.endswith('I'+key+'.dcm'):
+                    
+                    #if file.endswith('I'+key+'.dcm'):
+                    if ('I'+key) in file:
                         raw_image_archive.extract(file, 'temp_folder')
 
                 preprocess_image('temp_folder', out_path, str(key), atlas_image)
@@ -61,47 +65,8 @@ def main(in_data, images, out_path, global_time, process_no):
             print('Total time spent is %.2f' % global_time_spent, "minutes of batch no:", process_no)
             print('At this speed, this batch will finish in %.2f' % (running_average * images_left_counter) ,'minutes.')
 
-            shutil.rmtree('temp_folder')
-
-global_time = time.time()
-
-in_path = '/Volumes/Extreme SSD/Download/Download_collection4.zip'
-image_list_path = "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_paths/images_with_paths_file_4.npy"
-out_path = '/Volumes/Extreme SSD/ADNI_PROCESSED/'
-
-main(in_path, image_list_path, out_path, global_time, 5)
-
-in_path = '/Volumes/Extreme SSD/Download/Download_collection5.zip'
-image_list_path = "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_paths/images_with_paths_file_5.npy"
-out_path = '/Volumes/Extreme SSD/ADNI_PROCESSED/'
-
-global_time = time.time()
-
-main(in_path, image_list_path, out_path, global_time, 6)
-
-in_path = '/Volumes/Extreme SSD/Download/Download_collection6.zip'
-image_list_path = "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_paths/images_with_paths_file_6.npy"
-out_path = '/Volumes/Extreme SSD/ADNI_PROCESSED/'
-
-global_time = time.time()
-
-main(in_path, image_list_path, out_path, global_time, 7)
-
-in_path = '/Volumes/Extreme SSD/Download/Download_collection7.zip'
-image_list_path = "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_paths/images_with_paths_file_7.npy"
-out_path = '/Volumes/Extreme SSD/ADNI_PROCESSED/'
-
-global_time = time.time()
-
-main(in_path, image_list_path, out_path, global_time, 8)
-
-in_path = '/Volumes/Extreme SSD/Download/Download_collection8.zip'
-image_list_path = "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_paths/images_with_paths_file_8.npy"
-out_path = '/Volumes/Extreme SSD/ADNI_PROCESSED/'
-
-global_time = time.time()
-
-main(in_path, image_list_path, out_path, global_time, 9)
+            if os.path.exists('/Users/olath/Documents/GitHub/Master-thesis/Data_Preprocessing/temp_folder'):
+                shutil.rmtree('temp_folder')
 
 in_path = '/Volumes/Extreme SSD/Download/Download_collection_dataset.zip'
 image_list_path = "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_paths/images_with_paths_file_9.npy"

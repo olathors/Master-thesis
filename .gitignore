@@ -165,3 +165,4 @@ temp_folder/
 Data_Experimentation/temp_folder/
 *.gz
 /Data_Preprocessing/temp_slicing_folder
+*.png

@@ -1,8 +1,20 @@
 import dicom2nifti
 import ants
-from dicom2nifti.exceptions import ConversionValidationError
     
 def convert_and_correct(in_path, image_name):
+
+    '''
+    Function that converts dcm series to nifti and then ants image, and executes bias field correction.
+
+    --PARAMETERS--
+
+    in_path: Path to the zipped folder containing the dcm series for a single image
+
+    image_name: name of the relevant image
+
+    returns: bias corrected ants image
+    
+    '''
 
     try:
         dicom2nifti.dicom_series_to_nifti(in_path, 'temp.nii.gz', reorient_nifti=True)

@@ -65,4 +65,4 @@ def main(in_path, out_path, global_time):
 
 global_time = time.time()
 
-main('/Volumes/Extreme SSD/ADNI_PROCESSED/', '/Volumes/Extreme SSD/ADNI_SLICED/', global_time)
+main('/Volumes/Extreme SSD/ATLAS/', '/Volumes/Extreme SSD/ATLAS_SLICED/', global_time)

@@ -8,6 +8,22 @@ from mri_crop import crop_image
 
 def preprocess_image(in_path, out_path, image_name, atlas_image):
 
+    '''
+    Function for preprocessing a single image and saving it to the output directory.
+
+    --PARAMETERS--
+
+    in_path: Path to the zipped folder containing the dcm series for the relevant image.
+
+    out_path: Path to the output directory.
+
+    image_name: Name of the relevant image
+
+    atlas_image: ants image of the atlas brain.
+    
+    
+    '''
+
     #Converts input series to NIFTI, then ANTS image and preforms bias field correction.
 
     corrected_image = convert_and_correct(in_path, image_name)

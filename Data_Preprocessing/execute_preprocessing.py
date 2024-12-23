@@ -9,6 +9,24 @@ import os
 
 def main(in_data, images, out_path, global_time, process_no):
 
+    '''
+    Main function for running the preprocessing pipeline.
+
+    --PARAMETERS--
+
+    in_data: Path to the zipped download file from ADNI
+
+    images: Path to dictionary containing image names and specific paths
+
+    out_path: Path to output directory where preprocessed images are saved.
+
+    global_time: To keep track of time over multiple function calls.
+
+    process_no: To keep track of call no.
+
+    '''
+
+    #Serring up variables.
     relevant_image_names = np.load(images,allow_pickle='TRUE').item()
     atlas_image = ants.image_read('/Volumes/Extreme SSD/Download/mni_icbm152_nlin_sym_09c/mni_icbm152_t1_tal_nlin_sym_09c.nii')
     images_preprocessed_counter = 0
@@ -22,36 +40,36 @@ def main(in_data, images, out_path, global_time, process_no):
     if os.path.exists('/Users/olath/Documents/GitHub/Master-thesis/Data_Preprocessing/temp_folder'):
         shutil.rmtree('temp_folder')
 
+    #Iterating through all image names.
     for key in relevant_image_names:
-
         current_image_no += 1
         images_left_counter -= 1
 
+        #Checking if image already preprocessed.
         if (str(key)+'.nii.gz') in images_already_preprocessed:
             print('Image',current_image_no,'already preprocessed')
 
+        #If not already preprocessed, runs preprocessing.
         else:
             local_time = time.time()
 
             try:
+                #Folder to store extracted dcm series.
                 os.makedirs('temp_folder')
 
-                for file in raw_image_archive.namelist():
-                    
-                    #if file.endswith('I'+key+'.dcm'):
-                    if ('I'+key) in file:
+                for file in raw_image_archive.namelist():                 
+                    if ('I'+key) in file:                       
                         raw_image_archive.extract(file, 'temp_folder')
 
+                #Executes the preprocessing
                 preprocess_image('temp_folder', out_path, str(key), atlas_image)
 
             except Exception as err:
-
                 logf = open("conversion.log", "a")
                 logf.write(("Failed to convert {0}: {1}\n".format(str(key), str(err))))
                 logf.close()
-
-            
-
+    
+            #Metrics
             images_preprocessed_counter += 1
             local_time_spent = (time.time() - local_time)
             global_time_spent = (time.time() - global_time) / 60

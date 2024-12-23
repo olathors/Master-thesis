@@ -30,11 +30,11 @@ def scale_image (corrected_image, atlas_image):
 
     return moving_image
 
-def get_percentiles(img):
+def get_percentiles(img, lower = 0.02, upper = 99.8):
 
     flat_image = img.ravel()
-    lower_percentile = np.percentile(flat_image,0.02)
-    upper_percentile = np.percentile(flat_image,99.8)
+    lower_percentile = np.percentile(flat_image,lower)
+    upper_percentile = np.percentile(flat_image,upper)
     return lower_percentile, upper_percentile
 
 def scale_image_linearly(image_array, lower_threshold, upper_threshold):

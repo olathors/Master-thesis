@@ -1,7 +1,6 @@
 import nibabel as nib
 import numpy as np
 from matplotlib import pyplot as plt
-from mri_crop import crop_image
 
 def slice_image(path, image):
     

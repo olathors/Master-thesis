@@ -9,15 +9,19 @@ import seaborn as sns
 
 import torch
 from torch.nn import CrossEntropyLoss
-from transformers import ViTForImageClassification
-import timm
+import torchvision
+#from transformers import ViTForImageClassification
+#import timm
 
 from tqdm import tqdm, trange
 from dotenv import load_dotenv
 from loguru import logger
 
-%load_ext autoreload
-%autoreload 2
+from mri_dataset import MRI_Dataset
+from torch.utils.data import DataLoader
+
+#%load_ext autoreload
+#%autoreload 2
 
 load_dotenv()
 
@@ -26,11 +30,11 @@ torch.manual_seed(0)
 sys.path.append(os.path.abspath(os.path.join('..', 'src')))
 
 from experiment_manager import *
-from dataset import load_cifar10,load_cifar100
-from model import load_model
+#from dataset import load_cifar10,load_cifar100
+#from model import load_model
 
 # setting device on GPU if available, else CPU
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('mps' if torch.mps.is_available() else 'cpu')
 print('Using device:', device)
 
 #Additional Info when using cuda
@@ -45,16 +49,23 @@ if device.type == 'cuda':
 # Running ViT Tiny
 optimizer = torch.optim.Adam
 criterion = torch.nn.CrossEntropyLoss
-batch_size = 128
-learning_rate = 1e-3
-epochs = 20
-early_stopping_epochs = 5
-experiment_tag = "ViT-tiny - CIFAR100 reduced"
-dataset_tag = "CIFAR100-reduced"
-num_classes = 100
+batch_size = 64
+learning_rate = 1e-4
+epochs = 50
+early_stopping_epochs = 7
+experiment_tag = "Test experiment"
+dataset_tag = "Custom dataset"
+num_classes = 2
 
-train_loader, validation_loader = load_cifar100(batch_size=batch_size,validation_split=0.5)
-model = load_model(model_type='vit-tiny', num_classes=num_classes)
+train_dataset = MRI_Dataset('/Users/olath/Documents/GitHub/Master-thesis/train')
+test_dataset = MRI_Dataset('/Users/olath/Documents/GitHub/Master-thesis/test')
+val_dataset = MRI_Dataset('/Users/olath/Documents/GitHub/Master-thesis/val')
+
+train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+validation_loader  = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
+
+#train_loader, validation_loader = load_cifar100(batch_size=batch_size,validation_split=0.5)
+model = torchvision.models.efficientnet_v2_l()
 model_params = None
 
 experiment_params = ExperimentParameters(
@@ -75,6 +86,6 @@ experiment_params = ExperimentParameters(
 experiment_manager = ExperimentManager(experiment_parameters=experiment_params)
 experiment_manager.run_experiment(train_loader, 
                                   validation_loader,
-                                  save_logs=True,
+                                  save_logs=False,
                                   plot_results=True,
                                   verbose=1)

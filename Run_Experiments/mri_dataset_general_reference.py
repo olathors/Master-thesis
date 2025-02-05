@@ -13,7 +13,7 @@ def main():
 
     dicts = [cn_dict_with_images, ad_dict_with_images, smci_dict_with_images, pmci_dict_with_images]
 
-    split = [0.7, 0.2, 0.1]
+    split = [0.6, 0.2, 0.2]
 
     create_reference_file_patients(split, dicts)
     

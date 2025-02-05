@@ -16,7 +16,7 @@ NEPTUNE_API_TOKEN = os.getenv("NEPTUNE_API_TOKEN")
 NEPTUNE_PROJECT = os.getenv("NEPTUNE_PROJECT")
 EXPERIMENT_PATH = os.getenv('EXPERIMENT_PATH','~/projects/phd/experiments')
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('mps' if torch.mps.is_available() else 'cpu')
 
 from dataclasses import dataclass
 
@@ -254,7 +254,7 @@ class ExperimentManager:
         # for batch in train_loader:
             x, y = batch
             x, y = x.to(device), y.to(device)
-            y_hat = model(x)
+            y_hat = model(x.float())
             y_hat = y_hat.logits if hasattr(y_hat, 'logits') else y_hat  # Extract logits if the model output is a complex object
             
             loss = criterion(y_hat, y)
@@ -285,7 +285,7 @@ class ExperimentManager:
             # for batch in data_loader:
                 x, y = batch
                 x, y = x.to(device), y.to(device)
-                y_hat = model(x)
+                y_hat = model(x.float())
                 y_hat = y_hat.logits if hasattr(y_hat, 'logits') else y_hat  # Extract logits if the model output is a complex object
 
                 loss += criterion(y_hat, y).item()
@@ -392,7 +392,7 @@ class ExperimentManager:
 
         self.experiment_log['experiment_results'].append(results)
         self._save_logs()
-
+    
     def _save_logs(self):
         path = os.path.expanduser(self.experiment_directory) if self.experiment_directory is not None else os.path.expanduser(EXPERIMENT_PATH)
         with open(f'{path}/logs/experiment_log_{self.experiment_tag}.json', 'w') as fp:
@@ -427,7 +427,7 @@ class ExperimentManager:
             df_experiments_epochs = pd.DataFrame(self.epoch_results)
         df_experiments_epochs.to_csv(experiments_epochs_path,index=False)
         del df_experiments_epochs, df_experiments_results, df_experiments_setup
-
+    #TODO check with lucas the following method
     def _save_model(self, model,tag=''):
 
         path = os.path.expanduser(self.experiment_directory) if self.experiment_directory is not None else os.path.expanduser(EXPERIMENT_PATH)

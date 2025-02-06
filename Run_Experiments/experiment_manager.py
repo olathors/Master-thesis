@@ -19,6 +19,7 @@ EXPERIMENT_PATH = os.getenv('EXPERIMENT_PATH','~/projects/phd/experiments')
 device = torch.device('mps' if torch.mps.is_available() else 'cpu')
 
 from dataclasses import dataclass
+from evaluation import compute_metrics_binary
 
 @dataclass
 class ExperimentParameters:
@@ -146,9 +147,12 @@ class ExperimentManager:
             validation_losses = []
             train_accuracies = []
             validation_accuracies = []
+            train_aucs = []
+            validation_aucs = []
 
             best_validation_loss = float('inf')
             best_validation_accuracy = 0
+            best_validation_auc = 0
             best_model_state = None
             early_stop_counter = 0
 
@@ -156,10 +160,13 @@ class ExperimentManager:
             start_experiment = datetime.now()
             for epoch in range(1, self.epochs + 1): # type: ignore
                 start_training = datetime.now()
-                train_loss, train_accuracy = self._train(model, criterion, train_loader, optimizer)
+                train_loss, train_accuracy, train_y_true, train_y_pred_proba = self._train(model, criterion, train_loader, optimizer)
                 end_training = datetime.now()
                 
-                validation_loss, validation_accuracy = self._evaluate(model, criterion, validation_loader)
+                validation_loss, validation_accuracy, val_y_true, val_y_pred_proba = self._evaluate(model, criterion, validation_loader)
+
+                train_auc = compute_metrics_binary(train_y_true, train_y_pred_proba)
+                validation_auc = compute_metrics_binary(val_y_true, val_y_pred_proba)
 
                 if self.scheduler is not None:
                     scheduler.step(epoch - 1)
@@ -168,22 +175,32 @@ class ExperimentManager:
                 validation_losses.append(validation_loss)
                 train_accuracies.append(train_accuracy)
                 validation_accuracies.append(validation_accuracy)
+                train_aucs.append(train_auc)
+                validation_aucs.append(validation_auc)
+
+
+                
 
                 # Log metrics to Neptune
                 self.run[f"metrics/{round}/train_loss"].log(train_loss, step=epoch)
                 self.run[f"metrics/{round}/validation_loss"].log(validation_loss, step=epoch)
                 self.run[f"metrics/{round}/train_accuracy"].log(train_accuracy, step=epoch)
                 self.run[f"metrics/{round}/validation_accuracy"].log(validation_accuracy,step=epoch)
+                self.run[f"metrics/{round}/train_auc"].log(train_auc, step=epoch)
+                self.run[f"metrics/{round}/validation_auc"].log(validation_auc,step=epoch)
                 
                 if verbose > 0:
                     print(f"Epoch {epoch}/{self.epochs} Train Loss: {train_loss:.4f} Validation Loss: {validation_loss:.4f}")
-                    print(f"Epoch {epoch}/{self.epochs} Train Accuracy: {train_accuracy:.2f}% Validation Accuracy: {validation_accuracy:.2f}%\n")
+                    print(f"Epoch {epoch}/{self.epochs} Train Accuracy: {train_accuracy:.2f}% Validation Accuracy: {validation_accuracy:.2f}%")
+                    print(f"Epoch {epoch}/{self.epochs} Train AUC: {train_auc:.3f} Validation AUC: {validation_auc:.3f}\n")
                 
                 if save_logs:
                     self._log_epoch_results(round, epoch, train_loss, train_accuracy, validation_loss, validation_accuracy, training_time_minutes=(end_training - start_training).total_seconds() / 60)
                 
-                if validation_accuracy > best_validation_accuracy:
+                if validation_auc > best_validation_auc:
                     best_validation_loss = validation_loss
+                    best_validation_auc = validation_auc
+                    best_train_auc = train_auc
                     best_train_loss = train_loss
                     best_train_accuracy = train_accuracy
                     best_validation_accuracy = validation_accuracy
@@ -195,7 +212,7 @@ class ExperimentManager:
                     early_stop_counter += 1
 
                 if self.early_stopping_epochs is not None and early_stop_counter >= self.early_stopping_epochs:
-                    print(f"\nEarly stopping triggered! No improvement in validation loss for {self.early_stopping_epochs} epochs.")
+                    print(f"\nEarly stopping triggered! No improvement in validation AUC for {self.early_stopping_epochs} epochs.")
                     break
 
             end_experiment = datetime.now()
@@ -210,6 +227,8 @@ class ExperimentManager:
             self.run["results/best_validation_loss"] = best_validation_loss
             self.run["results/best_train_accuracy"] = best_train_accuracy
             self.run["results/best_validation_accuracy"] = best_validation_accuracy
+            self.run["results/best_train_auc"] = best_train_auc
+            self.run["results/best_validation_auc"] = best_validation_auc
             self.run["results/total_experiment_time_minutes"] = total_time
             
             if save_logs:
@@ -249,6 +268,9 @@ class ExperimentManager:
         correct = 0
         total = 0
 
+        predicted_logits = torch.Tensor().to(device)
+        true_labels = torch.Tensor().to(device)
+
         model.train()
         for batch in tqdm(train_loader, desc="Training"):
         # for batch in train_loader:
@@ -269,8 +291,14 @@ class ExperimentManager:
             total += y.size(0)
             correct += (predicted == y).sum().item()
 
+            y = y.type_as(y_hat)
+            true_labels = torch.cat((true_labels,y),0)
+            predicted_logits = torch.cat((predicted_logits,y_hat),0)
+
+
+        predicted_probas = torch.sigmoid(predicted_logits)
         train_accuracy = 100 * correct / total
-        return train_loss, train_accuracy
+        return train_loss, train_accuracy, true_labels, predicted_probas
 
     def _evaluate(self,model, criterion, data_loader):
         model.eval()
@@ -279,6 +307,9 @@ class ExperimentManager:
         total = 0
         y_true = []
         y_pred = []
+
+        predicted_logits = torch.Tensor().to(device)
+        true_labels = torch.Tensor().to(device)
 
         with torch.no_grad():
             for batch in tqdm(data_loader, desc="Evaluating"):
@@ -297,10 +328,14 @@ class ExperimentManager:
                 y_true.extend(y.tolist())
                 y_pred.extend(predicted.tolist())
 
+                true_labels = torch.cat((true_labels,y),0)
+                predicted_logits = torch.cat((predicted_logits,y_hat),0)
+
+        predicted_probas = torch.sigmoid(predicted_logits)
         loss /= len(data_loader)
         accuracy = 100 * correct / total
 
-        return loss, accuracy
+        return loss, accuracy, true_labels, predicted_probas
 
     def _plot_results(self,train_losses, test_losses, train_accuracies, test_accuracies, epochs):
         # Plot loss curve

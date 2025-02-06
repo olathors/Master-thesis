@@ -49,10 +49,10 @@ if device.type == 'cuda':
 # Running ViT Tiny
 optimizer = torch.optim.Adam
 criterion = torch.nn.CrossEntropyLoss
-batch_size = 64
+batch_size = 16
 learning_rate = 1e-4
-epochs = 50
-early_stopping_epochs = 7
+epochs = 100
+early_stopping_epochs = 10
 experiment_tag = "Test experiment"
 dataset_tag = "Custom dataset"
 num_classes = 2
@@ -65,7 +65,7 @@ train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 validation_loader  = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
 
 #train_loader, validation_loader = load_cifar100(batch_size=batch_size,validation_split=0.5)
-model = torchvision.models.efficientnet_v2_l()
+model = torchvision.models.efficientnet_v2_l(num_classes = 2)
 model_params = None
 
 experiment_params = ExperimentParameters(

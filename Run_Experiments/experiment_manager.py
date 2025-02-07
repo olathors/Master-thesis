@@ -165,18 +165,18 @@ class ExperimentManager:
                 
                 validation_loss, validation_accuracy, val_y_true, val_y_pred_proba = self._evaluate(model, criterion, validation_loader)
 
-                train_auc = compute_metrics_binary(train_y_true, train_y_pred_proba)
-                validation_auc = compute_metrics_binary(val_y_true, val_y_pred_proba)
+                train_metrics = compute_metrics_binary(train_y_true, train_y_pred_proba)
+                validation_metrics = compute_metrics_binary(val_y_true, val_y_pred_proba)
 
                 if self.scheduler is not None:
                     scheduler.step(epoch - 1)
 
                 train_losses.append(train_loss)
                 validation_losses.append(validation_loss)
-                train_accuracies.append(train_accuracy)
-                validation_accuracies.append(validation_accuracy)
-                train_aucs.append(train_auc)
-                validation_aucs.append(validation_auc)
+                train_accuracies.append(train_metrics['accuracy'])
+                validation_accuracies.append(validation_metrics['accuracy'])
+                train_aucs.append(train_metrics['auc'])
+                validation_aucs.append(validation_metrics['auc'])
 
 
                 
@@ -184,26 +184,42 @@ class ExperimentManager:
                 # Log metrics to Neptune
                 self.run[f"metrics/{round}/train_loss"].log(train_loss, step=epoch)
                 self.run[f"metrics/{round}/validation_loss"].log(validation_loss, step=epoch)
-                self.run[f"metrics/{round}/train_accuracy"].log(train_accuracy, step=epoch)
-                self.run[f"metrics/{round}/validation_accuracy"].log(validation_accuracy,step=epoch)
-                self.run[f"metrics/{round}/train_auc"].log(train_auc, step=epoch)
-                self.run[f"metrics/{round}/validation_auc"].log(validation_auc,step=epoch)
+                self.run[f"metrics/{round}/train_accuracy"].log(train_metrics['accuracy'], step=epoch)
+                self.run[f"metrics/{round}/validation_accuracy"].log(validation_metrics['accuracy'],step=epoch)
+                self.run[f"metrics/{round}/train_auc"].log(train_metrics['auc'], step=epoch)
+                self.run[f"metrics/{round}/validation_auc"].log(validation_metrics['auc'],step=epoch)
+                self.run[f"metrics/{round}/train_f1score"].log(train_metrics['f1score'], step=epoch)
+                self.run[f"metrics/{round}/validation_f1score"].log(validation_metrics['f1score'],step=epoch)
+                self.run[f"metrics/{round}/train_precision"].log(train_metrics['precision'], step=epoch)
+                self.run[f"metrics/{round}/validation_precision"].log(validation_metrics['precision'],step=epoch)
+                self.run[f"metrics/{round}/train_recall"].log(train_metrics['recall'], step=epoch)
+                self.run[f"metrics/{round}/validation_recall"].log(validation_metrics['recall'],step=epoch)
                 
                 if verbose > 0:
                     print(f"Epoch {epoch}/{self.epochs} Train Loss: {train_loss:.4f} Validation Loss: {validation_loss:.4f}")
-                    print(f"Epoch {epoch}/{self.epochs} Train Accuracy: {train_accuracy:.2f}% Validation Accuracy: {validation_accuracy:.2f}%")
-                    print(f"Epoch {epoch}/{self.epochs} Train AUC: {train_auc:.3f} Validation AUC: {validation_auc:.3f}\n")
+                    print(f"Epoch {epoch}/{self.epochs} Train Accuracy: {train_metrics['accuracy']:.2f}% Validation Accuracy: {validation_metrics['accuracy']:.2f}%")
+                    print(f"Epoch {epoch}/{self.epochs} Train AUC: {train_metrics['auc']:.3f} Validation AUC: {validation_metrics['auc']:.3f}")
+                    print(f"Epoch {epoch}/{self.epochs} Train F1 score: {train_metrics['f1score']:.3f} Validation F1 score: {validation_metrics['f1score']:.3f}")
+                    print(f"Epoch {epoch}/{self.epochs} Train Precision: {train_metrics['precision']:.3f} Validation APrecision: {validation_metrics['precision']:.3f}")
+                    print(f"Epoch {epoch}/{self.epochs} Train Recall: {train_metrics['recall']:.3f} Validation Recall: {validation_metrics['recall']:.3f}\n")
                 
                 if save_logs:
                     self._log_epoch_results(round, epoch, train_loss, train_accuracy, validation_loss, validation_accuracy, training_time_minutes=(end_training - start_training).total_seconds() / 60)
                 
-                if validation_auc > best_validation_auc:
+                if validation_metrics['auc'] > best_validation_auc:
                     best_validation_loss = validation_loss
-                    best_validation_auc = validation_auc
-                    best_train_auc = train_auc
                     best_train_loss = train_loss
-                    best_train_accuracy = train_accuracy
-                    best_validation_accuracy = validation_accuracy
+                    best_validation_auc = validation_metrics['auc']
+                    best_train_auc = train_metrics['auc']
+                    best_validation_accuracy = validation_metrics['accuracy']
+                    best_train_accuracy = train_metrics['accuracy']
+                    best_validation_f1score = validation_metrics['f1score']
+                    best_train_f1score = train_metrics['f1score']
+                    best_validation_precision = validation_metrics['precision']
+                    best_train_precision = train_metrics['precision']
+                    best_validation_recall = validation_metrics['recall']
+                    best_train_recall = train_metrics['recall']
+                    
 
                     early_stop_counter = 0
                     if save_best_model:
@@ -212,7 +228,7 @@ class ExperimentManager:
                     early_stop_counter += 1
 
                 if self.early_stopping_epochs is not None and early_stop_counter >= self.early_stopping_epochs:
-                    print(f"\nEarly stopping triggered! No improvement in validation AUC for {self.early_stopping_epochs} epochs.")
+                    print(f"\nEarly stopping triggered! No improvement in validation loss for {self.early_stopping_epochs} epochs.")
                     break
 
             end_experiment = datetime.now()
@@ -229,6 +245,12 @@ class ExperimentManager:
             self.run["results/best_validation_accuracy"] = best_validation_accuracy
             self.run["results/best_train_auc"] = best_train_auc
             self.run["results/best_validation_auc"] = best_validation_auc
+            self.run["results/best_train_f1score"] = best_train_f1score
+            self.run["results/best_validation_f1score"] = best_validation_f1score
+            self.run["results/best_train_precision"] = best_train_precision
+            self.run["results/best_validation_precision"] = best_validation_precision
+            self.run["results/best_train_recall"] = best_train_recall
+            self.run["results/best_validation_recall"] = best_validation_recall
             self.run["results/total_experiment_time_minutes"] = total_time
             
             if save_logs:

@@ -4,9 +4,9 @@ def main(reference):
 
 
 
-    generate_mri_dataset_reference(reference, 'train', [[0],[1]], 'TRAIN', 'CORONAL', 43)
-    generate_mri_dataset_reference(reference, 'test', [[0],[1]], 'TEST', 'CORONAL', 43)
-    generate_mri_dataset_reference(reference, 'val', [[0],[1]], 'VAL', 'CORONAL', 43)
+    generate_mri_dataset_reference(reference, 'train', [[0],[2, 3],[1]], 'TRAIN', 'CORONAL', 43)
+    generate_mri_dataset_reference(reference, 'test', [[0],[2, 3],[1]], 'TEST', 'CORONAL', 43)
+    generate_mri_dataset_reference(reference, 'val', [[0],[2, 3],[1]], 'VAL', 'CORONAL', 43)
 
 def generate_mri_dataset_reference(mri_reference_path,
                                 output_path,
@@ -32,6 +32,7 @@ def generate_mri_dataset_reference(mri_reference_path,
         if (len(label) == 2):
 
             df_mri_dataset_temp2 = df_mri_reference.query("CLASS == @label[1] and TYPE == @type")
+            df_mri_dataset_temp2['CLASS'] = label_counter
             df_mri_dataset_temp = pd.concat([df_mri_dataset_temp, df_mri_dataset_temp2])
 
         temp_sets[label_counter] = df_mri_dataset_temp

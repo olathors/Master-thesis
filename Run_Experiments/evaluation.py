@@ -36,41 +36,47 @@ def compute_metrics_binary(y_true, y_pred_proba,threshold = 0.5,verbose=0):
 
     '''
     
+
+    y_pred_proba = torch.softmax(y_pred_proba, 1)
+
     y_pred_proba = get_numpy_array(y_pred_proba)
-    y_pred_label = y_pred_proba.copy()
-    y_pred_label[y_pred_proba >= threshold] = 1
-    y_pred_label[y_pred_proba < threshold] = 0
-    
+    #y_pred_label = y_pred_proba.copy()
+    #y_pred_label[y_pred_proba >= threshold] = 1
+    #y_pred_label[y_pred_proba < threshold] = 0
+
+    y_pred_label = np.argmax(y_pred_proba, 1)
+
     y_true = get_numpy_array(y_true)
 
-    auc = roc_auc_score(y_true, y_pred_proba[:,1])
-    #accuracy = accuracy_score(y_true, y_pred_label)
-    #f1score = f1_score(y_true, y_pred_label)
-    #recall = recall_score(y_true, y_pred_label)
-    #precision = precision_score(y_true, y_pred_label)
-    #conf_mat = confusion_matrix(y_true, y_pred_label)
+
+    auc = roc_auc_score(y_true, y_pred_proba, labels = [0,1,2], multi_class="ovr", average= 'weighted')
+    accuracy = accuracy_score(y_true, y_pred_label)
+    f1score = f1_score(y_true, y_pred_label, labels = [0,1,2], average = 'weighted')
+    recall = recall_score(y_true, y_pred_label, labels = [0,1,2], average = 'weighted')
+    precision = precision_score(y_true, y_pred_label, labels = [0,1,2], average = 'weighted')
+    conf_mat = confusion_matrix(y_true, y_pred_label, labels = [0,1,2])
 
     if verbose > 0:
         print('----------------')
         print("Total samples in batch:",y_true.shape)
         print("AUC:       %1.3f" % auc)
-        #print("Accuracy:  %1.3f" % accuracy)
-        #print("F1:        %1.3f" % f1score)
-        #print("Precision: %1.3f" % precision)
-        #print("Recall:    %1.3f" % recall)
-        #print("Confusion Matrix: \n", conf_mat)
+        print("Accuracy:  %1.3f" % accuracy)
+        print("F1:        %1.3f" % f1score)
+        print("Precision: %1.3f" % precision)
+        print("Recall:    %1.3f" % recall)
+        print("Confusion Matrix: \n", conf_mat)
         print('----------------')
     metrics = {
-        'auc':auc#,
-        #'accuracy':accuracy,
-        #'f1score':f1score,
-        #'precision':precision,
-        #'recall':recall,
-        #'conf_mat':conf_mat
+        'auc':auc,
+        'accuracy':accuracy,
+        'f1score':f1score,
+        'precision':precision,
+        'recall':recall,
+        'conf_mat':conf_mat
     }
 
     
-    return auc
+    return metrics
 
 def get_numpy_array(arr):
     if isinstance(arr,torch.Tensor):

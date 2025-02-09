@@ -2,10 +2,13 @@ import os
 import pandas as pd
 import numpy as np
 import torchvision
+import torch
 from torchvision.io import read_image
 from torch.utils.data import Dataset
 from torchvision import transforms as T
 from PIL import Image
+from augmentation import augment
+import math
 
 class MRI_Dataset(Dataset):
 
@@ -29,6 +32,10 @@ class MRI_Dataset(Dataset):
 
         # Load data and get label
         X = read_image(image_path)
+
+        if sample['TYPE'] == 'TRAIN':
+           X = augment(X)
+            
         X = X.repeat(3, 1, 1)
         X = X/X.max()
         

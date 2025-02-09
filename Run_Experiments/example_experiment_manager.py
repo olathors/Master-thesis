@@ -56,12 +56,12 @@ criterion = torch.nn.CrossEntropyLoss
 batch_size = 16
 learning_rate = 1e-4
 epochs = 100
-early_stopping_epochs = 10
+early_stopping_epochs = 20
 experiment_tag = "Test experiment AD/MCI/CD"
 dataset_tag = "No augmentation"
 model_tag="EfficientnetV2m imagenet"
 num_classes = 3
-weights_imagenet = "IMAGENET1K_V1"
+weights_imagenet = None
 
 train_dataset = MRI_Dataset('/Users/olath/Documents/GitHub/Master-thesis/train')
 test_dataset = MRI_Dataset('/Users/olath/Documents/GitHub/Master-thesis/test')
@@ -70,7 +70,7 @@ val_dataset = MRI_Dataset('/Users/olath/Documents/GitHub/Master-thesis/val')
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 validation_loader  = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
 
-model = torchvision.models.efficientnet_v2_m(weights = weights_imagenet)
+model = torchvision.models.efficientnet_v2_m(weights = weights_imagenet, num_classes = 3)
 
 if weights_imagenet is not None:
 

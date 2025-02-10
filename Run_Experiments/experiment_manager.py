@@ -16,7 +16,7 @@ NEPTUNE_API_TOKEN = os.getenv("NEPTUNE_API_TOKEN")
 NEPTUNE_PROJECT = os.getenv("NEPTUNE_PROJECT")
 EXPERIMENT_PATH = os.getenv('EXPERIMENT_PATH','~/projects/phd/experiments')
 
-device = torch.device('mps' if torch.mps.is_available() else 'cpu')
+device = torch.device('mps' if torch.mps.is_available() else 'cuda')
 
 from dataclasses import dataclass
 from evaluation import compute_metrics_binary
@@ -219,6 +219,8 @@ class ExperimentManager:
                     best_train_precision = train_metrics['precision']
                     best_validation_recall = validation_metrics['recall']
                     best_train_recall = train_metrics['recall']
+                    best_validation_confmat = validation_metrics['conf_mat']
+                    best_train_confmat = train_metrics['conf_mat']
                     
 
                     early_stop_counter = 0
@@ -251,6 +253,8 @@ class ExperimentManager:
             self.run["results/best_validation_precision"] = best_validation_precision
             self.run["results/best_train_recall"] = best_train_recall
             self.run["results/best_validation_recall"] = best_validation_recall
+            self.run["results/best_validation_confmat"] = best_validation_confmat
+            self.run["results/best_train_confmat"] = best_train_confmat
             self.run["results/total_experiment_time_minutes"] = total_time
             
             if save_logs:

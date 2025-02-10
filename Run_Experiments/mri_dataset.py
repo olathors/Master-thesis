@@ -10,6 +10,8 @@ from PIL import Image
 from augmentation import augment
 import math
 
+device = torch.device('mps' if torch.mps.is_available() else 'cuda')
+
 class MRI_Dataset(Dataset):
 
     def __init__(self, annotations_file, transform=None, target_transform=None):
@@ -29,19 +31,18 @@ class MRI_Dataset(Dataset):
         # Select sample
         sample = self.reference_table.iloc[idx]
         image_path = (self.img_dir + str(sample['IMAGE_ID']) +'/'+ sample['ORIENTATION'] +'/'+ str(sample['SLICE']) + '.png')
+        y = sample['CLASS']
 
         # Load data and get label
         X = read_image(image_path)
 
-        if sample['TYPE'] == 'TRAIN':
-           X = augment(X)
+        X = X.to(device)
+
+        if self.transform is not None:
+           X = self.transform(X)
             
         X = X.repeat(3, 1, 1)
         X = X/X.max()
         
-
-        #if 'ROTATION_ANGLE' in sample.index and sample['ROTATION_ANGLE'] != 0:
-        #    X = ndimage.rotate(X, sample['ROTATION_ANGLE'], reshape=False)
                          
-        y = sample['CLASS']
         return X, y

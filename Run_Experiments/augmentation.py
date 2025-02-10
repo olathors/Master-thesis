@@ -19,7 +19,7 @@ def augment(X):
 
     #X = shape_augment(X, p, m, n_shape)
 
-    aug = RandAugment(magnitude=2)
+    aug = RandAugment(magnitude=4)
 
     X = aug(X)
 

@@ -23,6 +23,7 @@ from torch.utils.data import DataLoader
 
 from custom_efficientnet import CustomEfficientnet
 from torchvision.models.efficientnet import _efficientnet_conf
+from torchvision.transforms import functional, RandAugment
 
 #%load_ext autoreload
 #%autoreload 2
@@ -34,11 +35,9 @@ torch.manual_seed(0)
 sys.path.append(os.path.abspath(os.path.join('..', 'src')))
 
 from experiment_manager import *
-#from dataset import load_cifar10,load_cifar100
-#from model import load_model
 
 # setting device on GPU if available, else CPU
-device = torch.device('mps' if torch.mps.is_available() else 'cpu')
+device = torch.device('mps' if torch.mps.is_available() else 'cuda')
 print('Using device:', device)
 
 #Additional Info when using cuda
@@ -50,7 +49,7 @@ if device.type == 'cuda':
 
 
 
-# Running ViT Tiny
+# Running EfficientNet
 optimizer = torch.optim.Adam
 criterion = torch.nn.CrossEntropyLoss
 batch_size = 16
@@ -62,8 +61,12 @@ dataset_tag = "No augmentation"
 model_tag="EfficientnetV2m imagenet"
 num_classes = 3
 weights_imagenet = None
+transform_magnitude = 4
 
-train_dataset = MRI_Dataset('/Users/olath/Documents/GitHub/Master-thesis/train')
+
+transform = RandAugment(magnitude = transform_magnitude)
+
+train_dataset = MRI_Dataset('/Users/olath/Documents/GitHub/Master-thesis/train', transform)
 test_dataset = MRI_Dataset('/Users/olath/Documents/GitHub/Master-thesis/test')
 val_dataset = MRI_Dataset('/Users/olath/Documents/GitHub/Master-thesis/val')
 

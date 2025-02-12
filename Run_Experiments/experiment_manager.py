@@ -12,11 +12,15 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import neptune
 
+NEPTUNE_API_TOKEN = "eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIyMmQ2ZjBlYy04ZDQ0LTQ0ZjAtYWNhMS1hNzZlOWE0MTRmZDEifQ=="
+NEPTUNE_PROJECT = "olathors-thesis/grid-test"
+EXPERIMENT_PATH = "/experiments"
+"""
 NEPTUNE_API_TOKEN = os.getenv("NEPTUNE_API_TOKEN")
 NEPTUNE_PROJECT = os.getenv("NEPTUNE_PROJECT")
 EXPERIMENT_PATH = os.getenv('EXPERIMENT_PATH','~/projects/phd/experiments')
-
-device = torch.device('mps' if torch.mps.is_available() else 'cuda')
+"""
+device = torch.device('cuda' if torch.cuda.is_available() else 'mps')
 
 from dataclasses import dataclass
 from evaluation import compute_metrics_binary
@@ -71,7 +75,9 @@ class ExperimentParameters:
     experiment_tag: Optional[str] = 'SWViT_CIFAR10'
     dataset_tag: Optional[str] = 'CIFAR10'
     model_tag: Optional[str] = 'ViT'
-    experiment_directory: Optional[str] = EXPERIMENT_PATH
+    transform_magnitude: Optional[str] = '0'
+    transform_num_ops: Optional[str] = '0'
+    experiment_directory: Optional[str] = '/fp/homes01/u01/ec-olathor/Documents/thesis/'
 
 class ExperimentManager:
     """
@@ -104,11 +110,12 @@ class ExperimentManager:
         self.dataset = experiment_parameters.dataset_tag
         self.experiment_tag = '_'.join([str(experiment_parameters.experiment_tag), datetime.now().strftime("%Y%m%d%H%M")])
         self.model_tag = experiment_parameters.model_tag
+        #self.transform_magnitude = experiment_parameters.transform_magnitude
 
         self.experiment_log = {}
         self.epoch_results = []
         self.pruning = experiment_parameters.pruning
-
+        
         self.run = neptune.init_run(project=NEPTUNE_PROJECT, api_token=NEPTUNE_API_TOKEN)
         self.run["experiment/name"] = self.experiment_tag
         self.run["experiment/dataset"] = experiment_parameters.dataset_tag
@@ -120,6 +127,9 @@ class ExperimentManager:
         self.run["experiment/criterion"] = experiment_parameters.criterion.__name__
         self.run["experiment/optimizer"] = experiment_parameters.optimizer.__name__
         self.run["experiment/learning_rate_schedule"] = '' if experiment_parameters.scheduler is None else experiment_parameters.scheduler.__name__
+        self.run["experiment/transform_magnitude"] = experiment_parameters.transform_magnitude
+        self.run["experiment/transform_num_ops"] = experiment_parameters.transform_num_ops
+        
 
     def run_experiment(self,
                     train_loader,
@@ -180,7 +190,7 @@ class ExperimentManager:
 
 
                 
-
+                
                 # Log metrics to Neptune
                 self.run[f"metrics/{round}/train_loss"].log(train_loss, step=epoch)
                 self.run[f"metrics/{round}/validation_loss"].log(validation_loss, step=epoch)
@@ -200,7 +210,7 @@ class ExperimentManager:
                     print(f"Epoch {epoch}/{self.epochs} Train Accuracy: {train_metrics['accuracy']:.2f}% Validation Accuracy: {validation_metrics['accuracy']:.2f}%")
                     print(f"Epoch {epoch}/{self.epochs} Train AUC: {train_metrics['auc']:.3f} Validation AUC: {validation_metrics['auc']:.3f}")
                     print(f"Epoch {epoch}/{self.epochs} Train F1 score: {train_metrics['f1score']:.3f} Validation F1 score: {validation_metrics['f1score']:.3f}")
-                    print(f"Epoch {epoch}/{self.epochs} Train Precision: {train_metrics['precision']:.3f} Validation APrecision: {validation_metrics['precision']:.3f}")
+                    print(f"Epoch {epoch}/{self.epochs} Train Precision: {train_metrics['precision']:.3f} Validation Precision: {validation_metrics['precision']:.3f}")
                     print(f"Epoch {epoch}/{self.epochs} Train Recall: {train_metrics['recall']:.3f} Validation Recall: {validation_metrics['recall']:.3f}\n")
                 
                 if save_logs:
@@ -256,6 +266,7 @@ class ExperimentManager:
             self.run["results/best_validation_confmat"] = best_validation_confmat
             self.run["results/best_train_confmat"] = best_train_confmat
             self.run["results/total_experiment_time_minutes"] = total_time
+            
             
             if save_logs:
                 self._log_experiment_results(model, round, total_time, epoch, best_train_loss, best_validation_loss, best_train_accuracy, best_validation_accuracy)

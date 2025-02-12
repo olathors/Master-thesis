@@ -52,7 +52,7 @@ def compute_metrics_binary(y_true, y_pred_proba,threshold = 0.5,verbose=0):
     accuracy = accuracy_score(y_true, y_pred_label)
     f1score = f1_score(y_true, y_pred_label, labels = [0,1,2], average = 'weighted')
     recall = recall_score(y_true, y_pred_label, labels = [0,1,2], average = 'weighted')
-    precision = precision_score(y_true, y_pred_label, labels = [0,1,2], average = 'weighted')
+    precision = precision_score(y_true, y_pred_label, labels = [0,1,2], average = 'weighted', zero_division = 0)
     conf_mat = confusion_matrix(y_true, y_pred_label, labels = [0,1,2])
 
     if verbose > 0:

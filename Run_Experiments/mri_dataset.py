@@ -7,17 +7,17 @@ from torchvision.io import read_image
 from torch.utils.data import Dataset
 from torchvision import transforms as T
 from PIL import Image
-from augmentation import augment
+#from augmentation import augment
 import math
 
-device = torch.device('mps' if torch.mps.is_available() else 'cuda')
+device = torch.device('cuda' if torch.cuda.is_available() else 'mps')
 
 class MRI_Dataset(Dataset):
 
-    def __init__(self, annotations_file, transform=None, target_transform=None):
+    def __init__(self, annotations_file, img_dir, transform=None, target_transform=None):
 
         self.reference_table = pd.read_csv(annotations_file)
-        self.img_dir = '/Users/olath/Documents/ADNI_SLICED/'
+        self.img_dir = img_dir
         self.transform = transform
         self.target_transform = target_transform
 
@@ -30,7 +30,7 @@ class MRI_Dataset(Dataset):
           
         # Select sample
         sample = self.reference_table.iloc[idx]
-        image_path = (self.img_dir + str(sample['IMAGE_ID']) +'/'+ sample['ORIENTATION'] +'/'+ str(sample['SLICE']) + '.png')
+        image_path = (self.img_dir + str(sample['IMAGE_ID']) +'/'+ str(sample['ORIENTATION']).lower() +'/'+ str(sample['SLICE']) + '.png')
         y = sample['CLASS']
 
         # Load data and get label

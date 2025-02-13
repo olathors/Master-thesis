@@ -7,7 +7,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 from scipy.special import erfcinv
-from sklearn.metrics import roc_auc_score,roc_curve,auc, f1_score, precision_score, recall_score, accuracy_score, confusion_matrix
+from sklearn.metrics import roc_auc_score,roc_curve,auc, f1_score, precision_score, recall_score, accuracy_score, confusion_matrix, ConfusionMatrixDisplay
 
 #from de_long_evaluation import delong_roc_test
 

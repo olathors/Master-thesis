@@ -11,9 +11,12 @@ import pandas as pd
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import neptune
+from sklearn.metrics import ConfusionMatrixDisplay
+
+import matplotlib.pyplot as plt
 
 NEPTUNE_API_TOKEN = "eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIyMmQ2ZjBlYy04ZDQ0LTQ0ZjAtYWNhMS1hNzZlOWE0MTRmZDEifQ=="
-NEPTUNE_PROJECT = "olathors-thesis/grid-test"
+NEPTUNE_PROJECT = "olathors-thesis/slice-test"
 EXPERIMENT_PATH = "/experiments"
 """
 NEPTUNE_API_TOKEN = os.getenv("NEPTUNE_API_TOKEN")
@@ -263,9 +266,13 @@ class ExperimentManager:
             self.run["results/best_validation_precision"] = best_validation_precision
             self.run["results/best_train_recall"] = best_train_recall
             self.run["results/best_validation_recall"] = best_validation_recall
-            self.run["results/best_validation_confmat"] = best_validation_confmat
-            self.run["results/best_train_confmat"] = best_train_confmat
             self.run["results/total_experiment_time_minutes"] = total_time
+
+            best_validation_confmat = ConfusionMatrixDisplay(best_validation_confmat)
+            #best_validation_confmat.plot().figure_.savefig('confusion_matrix.png')
+            
+            self.run["results/best_validation_confmat"].upload(best_validation_confmat.plot().figure_)
+
             
             
             if save_logs:

@@ -14,12 +14,15 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'mps')
 
 class MRI_Dataset(Dataset):
 
-    def __init__(self, annotations_file, img_dir, transform=None, target_transform=None):
+    def __init__(self, annotations_file, img_dir, transform=None, target_transform=None, slice = None):
 
         self.reference_table = pd.read_csv(annotations_file)
         self.img_dir = img_dir
         self.transform = transform
         self.target_transform = target_transform
+
+        if slice is not None:
+            self.reference_table['SLICE'] = slice
 
     def __len__(self):
         return len(self.reference_table)
@@ -32,6 +35,8 @@ class MRI_Dataset(Dataset):
         sample = self.reference_table.iloc[idx]
         image_path = (self.img_dir + str(sample['IMAGE_ID']) +'/'+ str(sample['ORIENTATION']).lower() +'/'+ str(sample['SLICE']) + '.png')
         y = sample['CLASS']
+
+        print(image_path)
 
         # Load data and get label
         X = read_image(image_path)

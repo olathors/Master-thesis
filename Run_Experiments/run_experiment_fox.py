@@ -1,5 +1,5 @@
 #from dotenv import load_dotenv
-
+import sys
 
 import os
 import numpy as np
@@ -50,78 +50,94 @@ epochs = 100
 early_stopping_epochs = 20
 experiment_tag = "Test experiment AD/MCI/CD"
 dataset_tag = "AD/MCI/CD"
-model_tag="EfficientnetV2m imagenet"
+model_tag="EfficientnetV2L"
 num_classes = 3
 weights_imagenet = None
 transform_magnitude = 4
 
 #Parameter grid
 
+model_s = efficientnet_v2_s(weights = weights_imagenet, num_classes = num_classes)
+
+model_m = efficientnet_v2_m(weights = weights_imagenet, num_classes = num_classes)
+
+model_l = efficientnet_v2_l(weights = weights_imagenet, num_classes = num_classes)
+
 param_grid = {
-    'batch_size' : [8,16,32,64],
-    'learning_rate' : [0.001, 0.0001, 0.00005, 0.00001, 0.000005, 0.000001],
-    'optimizer' :[torch.optim.Adam, torch.optim.SGD],
+    'model' : [model_l],
+    'batch_size' : [128, 64, 32, 16],
+    'learning_rate' : [0.001, 0.0001, 0.00001, 0.000001],
+    'optimizer' :[torch.optim.Adam],
     'loss' : [torch.nn.CrossEntropyLoss],
     'epochs' : [100],
-    'early_stopping_epochs' : [50],
-    'transform_magnitude' : [0, 1, 2, 3, 4],
-    'transform_num_ops' : [1, 2, 3, 4, 5]
+    'early_stopping_epochs' : [20],
+    'transform_magnitude' : [0, 1, 2],
+    'transform_num_ops' : [1, 2]
 }
 
 #train_dataset = MRI_Dataset('/fp/homes01/u01/ec-olathor/Documents/thesis/train','/fp/homes01/u01/ec-olathor/Documents/thesis/ADNI_SLICED/', transform)
 #val_dataset = MRI_Dataset('/fp/homes01/u01/ec-olathor/Documents/thesis/val','/fp/homes01/u01/ec-olathor/Documents/thesis/ADNI_SLICED/')
 
-model = efficientnet_v2_s(weights = weights_imagenet, num_classes = num_classes)
+job_id = sys.argv[0]
 
+path = (job_id[0:22])
+
+modelname = 3
 
 model_params = None
+for model in param_grid['model']:
+    #modelname += 1
+    for batch_size in param_grid['batch_size']:
+        for learning_rate in param_grid['learning_rate']:
+            for optimizer in param_grid['optimizer']:
+                for criterion in param_grid['loss']:
+                    for epochs in param_grid['epochs']:
+                        for early_stopping_epochs in param_grid['early_stopping_epochs']:
+                            for transform_magnitude in param_grid['transform_magnitude']:
+                                for transform_num_ops in param_grid['transform_num_ops']:
 
-for batch_size in param_grid['batch_size']:
-    for learning_rate in param_grid['learning_rate']:
-        for optimizer in param_grid['optimizer']:
-            for criterion in param_grid['loss']:
-                for epochs in param_grid['epochs']:
-                    for early_stopping_epochs in param_grid['early_stopping_epochs']:
-                        for transform_magnitude in param_grid['transform_magnitude']:
-                            for transform_num_ops in param_grid['transform_num_ops']:
 
-                                if transform_magnitude == 0:
-                                    transform = None
-                                else:
-                                    transform = RandAugment(magnitude = transform_magnitude, num_ops= transform_num_ops)
+                                    #Checking for redundant experiment runs with transformation magnitude zero
+                                    if transform_magnitude == 0 and transform_num_ops == 1:
+                                        #This is the only case where no transform happens
+                                        transform = None
+                                        transform_num_ops = 0
+                                    elif transform_magnitude == 0:
+                                        #In this case, we skip the experiment.
+                                        break                
+                                    else:
+                                        transform = RandAugment(magnitude = transform_magnitude, num_ops= transform_num_ops)
 
-                                train_dataset = MRI_Dataset('/fp/homes01/u01/ec-olathor/Documents/thesis/train', '/localscratch/1325070/ADNI_SLICED/', transform)
-                                val_dataset = MRI_Dataset('/fp/homes01/u01/ec-olathor/Documents/thesis/val', '/localscratch/1325070/ADNI_SLICED/')
+                                    train_dataset = MRI_Dataset((path+'train'), (path+'ADNI_SLICED_ONESLICE/'), transform)
+                                    val_dataset = MRI_Dataset((path+'val'), (path+'ADNI_SLICED_ONESLICE/'))
 
-                                train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-                                validation_loader  = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
+                                    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+                                    validation_loader  = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
 
-                                experiment_tag = ("Batch size: " + str(batch_size) + ". Learning_rate: " + str(learning_rate) +  
-                                                ". Optimizer: " + str(optimizer) + ". Loss: " + str(criterion) + ". Epochs: " + 
-                                                str(epochs) + " . Early stopping: " + str(early_stopping_epochs) + '. Transform magnitude: ' + 
-                                                str(transform_magnitude) + '. Transform num ops: ' + str(transform_num_ops) + '. ----')
+                                    experiment_tag = ("Model: " + str(modelname) + ".Batch size: " + str(batch_size) + ".Learning_rate: " + str(learning_rate) + '.Transform magnitude: ' + 
+                                                    str(transform_magnitude) + '.Transform num ops: ' + str(transform_num_ops) + '.  ')
 
-                                experiment_params = ExperimentParameters(
-                                    model = deepcopy(model),
-                                    model_params=model_params,
-                                    optimizer=optimizer,
-                                    criterion=criterion,
-                                    batch_size=batch_size,
-                                    learning_rate=learning_rate,
-                                    epochs=epochs,
-                                    early_stopping_epochs=early_stopping_epochs,
-                                    experiment_tag=experiment_tag,
-                                    dataset_tag=dataset_tag,
-                                    model_tag=model_tag,
-                                    transform_magnitude=transform_magnitude,
-                                    transform_num_ops = transform_num_ops,
-                                    experiment_directory = os.getenv("EXPERIMENT_PATH"),
-                                )
+                                    experiment_params = ExperimentParameters(
+                                        model = deepcopy(model),
+                                        model_params=model_params,
+                                        optimizer=optimizer,
+                                        criterion=criterion,
+                                        batch_size=batch_size,
+                                        learning_rate=learning_rate,
+                                        epochs=epochs,
+                                        early_stopping_epochs=early_stopping_epochs,
+                                        experiment_tag=experiment_tag,
+                                        dataset_tag=dataset_tag,
+                                        model_tag=model_tag,
+                                        transform_magnitude=transform_magnitude,
+                                        transform_num_ops = transform_num_ops,
+                                        experiment_directory = os.getenv("EXPERIMENT_PATH"),
+                                    )
 
-                                experiment_manager = ExperimentManager(experiment_parameters=experiment_params)
-                                experiment_manager.run_experiment(train_loader, 
-                                                                    validation_loader,
-                                                                    save_logs=False,
-                                                                    plot_results=False,
-                                                                    verbose=1)
+                                    experiment_manager = ExperimentManager(experiment_parameters=experiment_params)
+                                    experiment_manager.run_experiment(train_loader, 
+                                                                        validation_loader,
+                                                                        save_logs=False,
+                                                                        plot_results=False,
+                                                                        verbose=0)
 

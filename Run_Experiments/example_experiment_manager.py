@@ -52,28 +52,29 @@ if device.type == 'cuda':
 # Running EfficientNet
 optimizer = torch.optim.Adam
 criterion = torch.nn.CrossEntropyLoss
-batch_size = 16
-learning_rate = 1e-4
-epochs = 100
-early_stopping_epochs = 20
+batch_size = 128
+learning_rate = 0.0001
+epochs = 200
+early_stopping_epochs = 25
 experiment_tag = "Test experiment AD/MCI/CD"
 dataset_tag = "No augmentation"
-model_tag="EfficientnetV2m imagenet"
+model_tag="EfficientnetV2s"
 num_classes = 3
 weights_imagenet = None
-transform_magnitude = 4
+transform_magnitude = 2
+transform_num_ops = 2
 
 
-transform = RandAugment(magnitude = transform_magnitude)
+transform = RandAugment(magnitude = transform_magnitude, num_ops = transform_num_ops)
 
-train_dataset = MRI_Dataset('/Users/olath/Documents/GitHub/Master-thesis/train', transform)
-test_dataset = MRI_Dataset('/Users/olath/Documents/GitHub/Master-thesis/test')
-val_dataset = MRI_Dataset('/Users/olath/Documents/GitHub/Master-thesis/val')
+train_dataset = MRI_Dataset('/Users/olath/Documents/GitHub/Master-thesis/train','/Users/olath/Documents/ADNI_SLICED/', transform) 
+#test_dataset = MRI_Dataset('/Users/olath/Documents/GitHub/Master-thesis/test')
+val_dataset = MRI_Dataset('/Users/olath/Documents/GitHub/Master-thesis/val','/Users/olath/Documents/ADNI_SLICED/')
 
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 validation_loader  = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
 
-model = torchvision.models.efficientnet_v2_m(weights = weights_imagenet, num_classes = 3)
+model = torchvision.models.efficientnet_v2_s(weights = weights_imagenet, num_classes = 3)
 
 if weights_imagenet is not None:
 

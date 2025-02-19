@@ -4,9 +4,9 @@ def main(reference):
 
 
 
-    generate_mri_dataset_reference(reference, 'train', [[0],[2, 3],[1]], 'TRAIN', 'CORONAL', 43)
-    generate_mri_dataset_reference(reference, 'test', [[0],[2, 3],[1]], 'TEST', 'CORONAL', 43)
-    generate_mri_dataset_reference(reference, 'val', [[0],[2, 3],[1]], 'VAL', 'CORONAL', 43)
+    generate_mri_dataset_reference(reference, 'train_CN-AD', [[0],[1]], 'TRAIN', 'CORONAL', 43)
+    generate_mri_dataset_reference(reference, 'test_CN-AD', [[0],[1]], 'TEST', 'CORONAL', 43)
+    generate_mri_dataset_reference(reference, 'val_CN-AD', [[0],[1]], 'VAL', 'CORONAL', 43)
 
 def generate_mri_dataset_reference(mri_reference_path,
                                 output_path,

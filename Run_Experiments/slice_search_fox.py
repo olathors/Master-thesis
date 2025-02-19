@@ -19,93 +19,101 @@ from copy import deepcopy
 #load_dotenv()
 
 import neptune
-"""
+
 NEPTUNE_API_TOKEN = "eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIyMmQ2ZjBlYy04ZDQ0LTQ0ZjAtYWNhMS1hNzZlOWE0MTRmZDEifQ=="
-NEPTUNE_PROJECT = "olathors-thesis/slice-test"
+NEPTUNE_PROJECT = "olathors-thesis/SliceSearchSaggital"
 EXPERIMENT_PATH = "/experiments"
-"""
 
-np.random.seed(110323)
-torch.manual_seed(110323)
-#sys.path.append(os.path.abspath(os.path.join('..', 'src')))
+def main():
+    #torch.multiprocessing.set_start_method('spawn', force = True)
 
-#TODO Change to cuda only
-device = torch.device('cuda' if torch.cuda.is_available() else 'mps')
-print('Using device:', device)
+    np.random.seed(110323)
+    torch.manual_seed(110323)
+    #sys.path.append(os.path.abspath(os.path.join('..', 'src')))
 
-if device.type == 'cuda':
-    print(torch.cuda.get_device_name(0))
-    print('Memory Usage:')
-    print('Allocated:', round(torch.cuda.memory_allocated(0)/1024**3,1), 'GB')
-    print('Cached:   ', round(torch.cuda.memory_reserved(0)/1024**3,1), 'GB')
+    #TODO Change to cuda only
+    device = torch.device('cuda' if torch.cuda.is_available() else 'mps')
+    print('Using device:', device)
 
-#Parameters that do not change
+    if device.type == 'cuda':
+        print(torch.cuda.get_device_name(0))
+        print('Memory Usage:')
+        print('Allocated:', round(torch.cuda.memory_allocated(0)/1024**3,1), 'GB')
+        print('Cached:   ', round(torch.cuda.memory_reserved(0)/1024**3,1), 'GB')
 
-# Running EfficientNet
-optimizer = torch.optim.Adam
-criterion = torch.nn.CrossEntropyLoss
-batch_size = 32
-learning_rate = 0.0001
-epochs = 100
-early_stopping_epochs = 20
-experiment_tag = "Test slice search"
-dataset_tag = "AD/MCI/CD"
-model_tag="EfficientnetV2S"
-num_classes = 3
-weights_imagenet = None
-transform_magnitude = 1
-transform_num_ops = 2
+    #Parameters that do not change
 
-job_id = sys.argv[0]
+    # Running EfficientNet
+    optimizer = torch.optim.Adam
+    criterion = torch.nn.CrossEntropyLoss
+    batch_size = 16
+    learning_rate = 0.00001
+    epochs = 200
+    early_stopping_epochs = 30
+    experiment_tag = "Slice search Saggital"
+    dataset_tag = "AD/MCI/CD"
+    model_tag="EfficientnetV2S"
+    num_classes = 3
+    weights_imagenet = None
+    transform_magnitude = 1
+    transform_num_ops = 2
 
-path = (job_id[0:22])
+    job_id = sys.argv[0]
 
-#Optimal model
+    path = (job_id[0:22])
 
-model = efficientnet_v2_s(weights = weights_imagenet, num_classes = num_classes)
+    #Optimal model
 
-transform = RandAugment(magnitude = transform_magnitude, num_ops= transform_num_ops)
+    model = efficientnet_v2_s(weights = weights_imagenet, num_classes = num_classes)
 
-#train_dataset = MRI_Dataset('/fp/homes01/u01/ec-olathor/Documents/thesis/train','/fp/homes01/u01/ec-olathor/Documents/thesis/ADNI_SLICED/', transform)
-#val_dataset = MRI_Dataset('/fp/homes01/u01/ec-olathor/Documents/thesis/val','/fp/homes01/u01/ec-olathor/Documents/thesis/ADNI_SLICED/')
+    transform = RandAugment(magnitude = transform_magnitude, num_ops= transform_num_ops)
 
-orientation = 'coronal'
+    #train_dataset = MRI_Dataset('/fp/homes01/u01/ec-olathor/Documents/thesis/train','/fp/homes01/u01/ec-olathor/Documents/thesis/ADNI_SLICED/', transform)
+    #val_dataset = MRI_Dataset('/fp/homes01/u01/ec-olathor/Documents/thesis/val','/fp/homes01/u01/ec-olathor/Documents/thesis/ADNI_SLICED/')
 
-modelname = 's'
+    orientation = 'SAGGITAL'
 
-model_params = None
+    modelname = 's'
 
-for slice in range(0, 101, 2):
+    model_params = None
 
-    train_dataset = MRI_Dataset((path+'train'), ('/fp/projects01/ec29/olathor/thesis/ADNI_SLICED/'), transform, slice = slice)
-    val_dataset = MRI_Dataset((path+'val'), ('/fp/projects01/ec29/olathor/thesis/ADNI_SLICED/'), slice = slice)
+    for slice in range(0, 100, 2):
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    validation_loader  = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
+        train_dataset = MRI_Dataset((path+'train'), (path+'ADNI_SLICED/'), transform = transform, slice = slice, orientation = orientation)
+        val_dataset = MRI_Dataset((path+'val'), (path+'ADNI_SLICED/'), slice = slice, orientation = orientation)
 
-    experiment_tag = ("Model: " + str(modelname) + ". Orientation: " + str(orientation) +  ". Slice index: " + str(slice))
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+        validation_loader  = DataLoader(val_dataset, batch_size=batch_size, shuffle=True) 
 
-    experiment_params = ExperimentParameters(
-        model = deepcopy(model),
-        model_params=model_params,
-        optimizer=optimizer,
-        criterion=criterion,
-        batch_size=batch_size,
-        learning_rate=learning_rate,
-        epochs=epochs,
-        early_stopping_epochs=early_stopping_epochs,
-        experiment_tag=experiment_tag,
-        dataset_tag=dataset_tag,
-        model_tag=model_tag,
-        transform_magnitude=transform_magnitude,
-        transform_num_ops = transform_num_ops,
-        experiment_directory = os.getenv("EXPERIMENT_PATH"),
-    )
+        experiment_tag = (str(slice)+",saggital")
 
-    experiment_manager = ExperimentManager(experiment_parameters=experiment_params)
-    experiment_manager.run_experiment(train_loader, 
-                                        validation_loader,
-                                        save_logs=False,
-                                        plot_results=False,
-                                        verbose=0)
+        experiment_params = ExperimentParameters(
+            model = deepcopy(model),
+            model_params=model_params,
+            optimizer=optimizer,
+            criterion=criterion,
+            batch_size=batch_size,
+            learning_rate=learning_rate,
+            epochs=epochs,
+            early_stopping_epochs=early_stopping_epochs,
+            experiment_tag=experiment_tag,
+            dataset_tag=dataset_tag,
+            model_tag=model_tag,
+            transform_magnitude=transform_magnitude,
+            transform_num_ops = transform_num_ops,
+            EXPERIMENT_PATH = EXPERIMENT_PATH,
+            NEPTUNE_API_TOKEN = NEPTUNE_API_TOKEN,
+            NEPTUNE_PROJECT = NEPTUNE_PROJECT
+        )
+
+        experiment_manager = ExperimentManager(experiment_parameters=experiment_params)
+        experiment_manager.run_experiment(train_loader, 
+                                            validation_loader,
+                                            save_logs=False,
+                                            plot_results=False,
+                                            verbose=0)
+
+
+if __name__ == '__main__':
+    main()
 

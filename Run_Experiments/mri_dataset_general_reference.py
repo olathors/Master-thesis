@@ -15,9 +15,16 @@ def main():
 
     split = [0.6, 0.2, 0.2]
 
-    create_reference_file_patients(split, dicts)
+    bad_images = pd.read_csv("/Users/olath/Documents/GitHub/Master-thesis/Run_Experiments/bad_images_saggital.csv")
+
+    bad_images = bad_images['IMAGE_ID'].tolist()
+
+    #Non existant images
+    bad_images.extend([396649, 397160])
+
+    create_reference_file_patients(split, dicts, bad_images)
     
-def create_reference_file_patients(split, dicts):
+def create_reference_file_patients(split, dicts, bad_images):
 
     train_split, test_split, val_split = split
 
@@ -36,20 +43,23 @@ def create_reference_file_patients(split, dicts):
                 for visit in dicts[i][patient]:
                     if len(visit) == 4 and len(visit[3]) != 0:
                         for image in visit[3]:
-                            writer.writerow([str(image),str(patient), i, 'TRAIN'])
+                            if image not in bad_images:
+                                writer.writerow([str(image),str(patient), i, 'TRAIN'])
 
             for patient in test:
                 for visit in dicts[i][patient]:
                     if len(visit) == 4 and len(visit[3]) != 0:
                         for image in visit[3]:
-                            writer.writerow([str(image),str(patient), i, 'TEST'])
+                            if image not in bad_images:
+                                writer.writerow([str(image),str(patient), i, 'TEST'])
 
             for patient in val:
 
                 for visit in dicts[i][patient]:
                     if len(visit) == 4 and len(visit[3]) != 0:
                         for image in visit[3]:
-                            writer.writerow([str(image),str(patient), i, 'VAL'])
+                            if image not in bad_images:
+                                writer.writerow([str(image),str(patient), i, 'VAL'])
 
 
 main()

@@ -15,15 +15,8 @@ from sklearn.metrics import ConfusionMatrixDisplay
 
 import matplotlib.pyplot as plt
 
-NEPTUNE_API_TOKEN = "eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIyMmQ2ZjBlYy04ZDQ0LTQ0ZjAtYWNhMS1hNzZlOWE0MTRmZDEifQ=="
-NEPTUNE_PROJECT = "olathors-thesis/slice-test"
-EXPERIMENT_PATH = "/experiments"
-"""
-NEPTUNE_API_TOKEN = os.getenv("NEPTUNE_API_TOKEN")
-NEPTUNE_PROJECT = os.getenv("NEPTUNE_PROJECT")
-EXPERIMENT_PATH = os.getenv('EXPERIMENT_PATH','~/projects/phd/experiments')
-"""
-device = torch.device('cuda' if torch.cuda.is_available() else 'mps')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('mps' if torch.mps.is_available() else 'cpu')
 
 from dataclasses import dataclass
 from evaluation import compute_metrics_binary
@@ -81,6 +74,14 @@ class ExperimentParameters:
     transform_magnitude: Optional[str] = '0'
     transform_num_ops: Optional[str] = '0'
     experiment_directory: Optional[str] = '/fp/homes01/u01/ec-olathor/Documents/thesis/'
+    NEPTUNE_API_TOKEN: Optional[str] = "eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIyMmQ2ZjBlYy04ZDQ0LTQ0ZjAtYWNhMS1hNzZlOWE0MTRmZDEifQ=="
+    NEPTUNE_PROJECT: Optional[str] = "olathors-thesis/test"
+    EXPERIMENT_PATH: Optional[str] = "/experiments"
+    classes: Optional[int] = 2
+    alpha: Optional [int] = 0
+    gamma: Optional [int] = 0
+    weight: Optional[Any] = None
+
 
 class ExperimentManager:
     """
@@ -104,6 +105,7 @@ class ExperimentManager:
         self.optimizer = experiment_parameters.optimizer
         self.scheduler = experiment_parameters.scheduler
         self.experiment_directory = experiment_parameters.experiment_directory
+        self.classes = experiment_parameters.classes
         
         self.batch_size = experiment_parameters.batch_size
         self.learning_rate = experiment_parameters.learning_rate
@@ -118,11 +120,18 @@ class ExperimentManager:
         self.experiment_log = {}
         self.epoch_results = []
         self.pruning = experiment_parameters.pruning
+
+        self.alpha = experiment_parameters.alpha
+        self.gamma = experiment_parameters.gamma
+        self.weight = experiment_parameters.weight
         
-        self.run = neptune.init_run(project=NEPTUNE_PROJECT, api_token=NEPTUNE_API_TOKEN)
+        self.run = neptune.init_run(project=experiment_parameters.NEPTUNE_PROJECT, api_token=experiment_parameters.NEPTUNE_API_TOKEN)
+        self.experiment_path = experiment_parameters.EXPERIMENT_PATH
         self.run["experiment/name"] = self.experiment_tag
         self.run["experiment/dataset"] = experiment_parameters.dataset_tag
         self.run["experiment/model"] = experiment_parameters.model_tag
+        self.run["experiment/loss_alpha"] = experiment_parameters.alpha
+        self.run["experiment/loss_gamma"] = experiment_parameters.gamma
 
         self.run["experiment/learning_rate"] = experiment_parameters.learning_rate
         self.run["experiment/epochs"] = experiment_parameters.epochs
@@ -150,7 +159,11 @@ class ExperimentManager:
             
             model = self.create_model_instance()
             
-            criterion = self.criterion().to(device)
+            if self.criterion.__name__ == 'FocalLoss':
+                criterion = self.criterion(alpha= self.alpha, gamma = self.gamma).to(device)
+            else:
+                criterion = self.criterion(weight = self.weight).to(device)
+
             optimizer = self.optimizer(model.parameters(), lr=self.learning_rate)
             
             if self.scheduler is not None:
@@ -178,8 +191,8 @@ class ExperimentManager:
                 
                 validation_loss, validation_accuracy, val_y_true, val_y_pred_proba = self._evaluate(model, criterion, validation_loader)
 
-                train_metrics = compute_metrics_binary(train_y_true, train_y_pred_proba)
-                validation_metrics = compute_metrics_binary(val_y_true, val_y_pred_proba)
+                train_metrics = compute_metrics_binary(train_y_true, train_y_pred_proba, self.classes)
+                validation_metrics = compute_metrics_binary(val_y_true, val_y_pred_proba, self.classes)
 
                 if self.scheduler is not None:
                     scheduler.step(epoch - 1)
@@ -267,6 +280,7 @@ class ExperimentManager:
             self.run["results/best_train_recall"] = best_train_recall
             self.run["results/best_validation_recall"] = best_validation_recall
             self.run["results/total_experiment_time_minutes"] = total_time
+            self.run["results/final_epoch"] = epoch
 
             best_validation_confmat = ConfusionMatrixDisplay(best_validation_confmat)
             #best_validation_confmat.plot().figure_.savefig('confusion_matrix.png')
@@ -320,7 +334,7 @@ class ExperimentManager:
         # for batch in train_loader:
             x, y = batch
             x, y = x.to(device), y.to(device)
-            y_hat = model(x.float())
+            y_hat = model(torch.Tensor.float(x))
             y_hat = y_hat.logits if hasattr(y_hat, 'logits') else y_hat  # Extract logits if the model output is a complex object
             
             loss = criterion(y_hat, y)
@@ -360,7 +374,7 @@ class ExperimentManager:
             # for batch in data_loader:
                 x, y = batch
                 x, y = x.to(device), y.to(device)
-                y_hat = model(x.float())
+                y_hat = model(torch.Tensor.float(x))
                 y_hat = y_hat.logits if hasattr(y_hat, 'logits') else y_hat  # Extract logits if the model output is a complex object
 
                 loss += criterion(y_hat, y).item()
@@ -473,13 +487,13 @@ class ExperimentManager:
         self._save_logs()
     
     def _save_logs(self):
-        path = os.path.expanduser(self.experiment_directory) if self.experiment_directory is not None else os.path.expanduser(EXPERIMENT_PATH)
+        path = os.path.expanduser(self.experiment_directory) if self.experiment_directory is not None else os.path.expanduser(self.EXPERIMENT_PATH)
         with open(f'{path}/logs/experiment_log_{self.experiment_tag}.json', 'w') as fp:
             json.dump(self.experiment_log, fp)
 
     def _save_final_log(self):
         
-        path = os.path.expanduser(self.experiment_directory) if self.experiment_directory is not None else os.path.expanduser(EXPERIMENT_PATH)
+        path = os.path.expanduser(self.experiment_directory) if self.experiment_directory is not None else os.path.expanduser(self.EXPERIMENT_PATH)
 
         experiments_setup_path = path + '/experiments_setup.csv'
         experiments_results_path = path + '/experiments_results.csv'
@@ -509,7 +523,7 @@ class ExperimentManager:
     #TODO check with lucas the following method
     def _save_model(self, model,tag=''):
 
-        path = os.path.expanduser(self.experiment_directory) if self.experiment_directory is not None else os.path.expanduser(EXPERIMENT_PATH)
+        path = os.path.expanduser(self.experiment_directory) if self.experiment_directory is not None else os.path.expanduser(self.EXPERIMENT_PATH)
 
         if path is not None:
             model_save_path = os.path.join(path, f'model_{self.experiment_tag}_{tag}.pth')

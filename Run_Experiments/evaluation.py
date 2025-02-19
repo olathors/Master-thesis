@@ -13,7 +13,7 @@ from sklearn.metrics import roc_auc_score,roc_curve,auc, f1_score, precision_sco
 
 
 
-def compute_metrics_binary(y_true, y_pred_proba,threshold = 0.5,verbose=0):
+def compute_metrics_binary(y_true, y_pred_proba, classes, threshold = 0.5, verbose=0):
     '''
     
     Compute the following metrics for a binary classification problem: 
@@ -35,7 +35,7 @@ def compute_metrics_binary(y_true, y_pred_proba,threshold = 0.5,verbose=0):
     Dict with metrics and their values.
 
     '''
-    
+    labels = list(range(0, classes))
 
     y_pred_proba = torch.softmax(y_pred_proba, 1)
 
@@ -48,12 +48,16 @@ def compute_metrics_binary(y_true, y_pred_proba,threshold = 0.5,verbose=0):
 
     y_true = get_numpy_array(y_true)
 
-    auc = roc_auc_score(y_true, y_pred_proba, labels = [0,1,2], multi_class="ovr", average= 'weighted')
+
+    if classes == 2:
+        auc = roc_auc_score(y_true, y_pred_label, labels = labels, average= 'weighted')
+    else:
+        auc = roc_auc_score(y_true, y_pred_proba, labels = labels, multi_class="ovr", average= 'weighted')
     accuracy = accuracy_score(y_true, y_pred_label)
-    f1score = f1_score(y_true, y_pred_label, labels = [0,1,2], average = 'weighted')
-    recall = recall_score(y_true, y_pred_label, labels = [0,1,2], average = 'weighted')
-    precision = precision_score(y_true, y_pred_label, labels = [0,1,2], average = 'weighted', zero_division = 0)
-    conf_mat = confusion_matrix(y_true, y_pred_label, labels = [0,1,2])
+    f1score = f1_score(y_true, y_pred_label, labels = labels, average = 'weighted')
+    recall = recall_score(y_true, y_pred_label, labels = labels, average = 'weighted')
+    precision = precision_score(y_true, y_pred_label, labels = labels, average = 'weighted', zero_division = 0)
+    conf_mat = confusion_matrix(y_true, y_pred_label, labels = labels)
 
     if verbose > 0:
         print('----------------')

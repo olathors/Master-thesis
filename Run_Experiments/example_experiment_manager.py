@@ -44,7 +44,7 @@ from experiment_manager import *
 def main():
 
     # setting device on GPU if available, else CPU
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    #device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     device = torch.device('mps' if torch.mps.is_available() else 'cpu')
     print('Using device:', device)
 
@@ -60,31 +60,31 @@ def main():
     optimizer = torch.optim.Adam
     criterion = FocalLoss
     batch_size = 16
-    learning_rate = 0.00001
+    learning_rate = 0.0000001
     epochs = 200
-    early_stopping_epochs = 50
-    experiment_tag = "2class"
-    dataset_tag = "AD/MCI/CD"
-    model_tag="EfficientnetV2S"
-    num_classes = 4
-    weights_imagenet = None
-    transform_magnitude = 2
-    transform_num_ops = 1
-    alpha = 0.25
+    early_stopping_epochs = 25
+    experiment_tag = "3class"
+    dataset_tag = "AD/BIGMCI/CD"
+    model_tag="EfficientnetV2M"
+    num_classes = 3
+    weights_imagenet = torchvision.models.EfficientNet_V2_M_Weights.DEFAULT
+    transform_magnitude = 3
+    transform_num_ops = 2
+    alpha = [0.5, 0.1, 0.4]
     gamma = 2
-    weight = torch.Tensor([0.25,0.25,0.5,0.5])
+    weight = None
 
 
     transform = RandAugment(magnitude = transform_magnitude, num_ops = transform_num_ops)
 
-    train_dataset = MRI_Dataset('/Users/olath/Documents/GitHub/Master-thesis/train_CN-sMCI-pMCI-AD','/Users/olath/Documents/ADNI_SLICED/', transform, triple = True) 
+    train_dataset = MRI_Dataset('/Users/olath/Documents/GitHub/Master-thesis/train_CN-BIGMCI-AD-timewindow','/Users/olath/Documents/ADNI_SLICED/', transform, triple = False) 
     #test_dataset = MRI_Dataset('/Users/olath/Documents/GitHub/Master-thesis/test')
-    val_dataset = MRI_Dataset('/Users/olath/Documents/GitHub/Master-thesis/val_CN-sMCI-pMCI-AD','/Users/olath/Documents/ADNI_SLICED/', triple = True)
+    val_dataset = MRI_Dataset('/Users/olath/Documents/GitHub/Master-thesis/val_CN-BIGMCI-AD-timewindow','/Users/olath/Documents/ADNI_SLICED/', triple = False)
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0)
     validation_loader  = DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=0)
 
-    model = torchvision.models.efficientnet_v2_l(weights = weights_imagenet, num_classes = num_classes)
+    model = torchvision.models.efficientnet_v2_m(weights=weights_imagenet)
 
     if weights_imagenet is not None:
 
@@ -92,21 +92,21 @@ def main():
         #Dropout for m model = 0.3, and linear layer in is 1280.
         #Dropout for l model = 0.4
 
-        dropout = 0.2
+        dropout = 0.3
         linear_in = 1280
 
         model.classifier= torch.nn.Sequential(
                     torch.nn.Dropout(p=dropout, inplace=True),
                     torch.nn.Linear(linear_in, num_classes),
                 )
-        
+        """
         for param in model.parameters():
             param.requires_grad = False
 
         for param in model.classifier.parameters():
             param.requires_grad = True
         
-
+        """
     model_params = None
 
     experiment_params = ExperimentParameters(

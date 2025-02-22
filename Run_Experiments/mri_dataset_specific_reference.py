@@ -4,9 +4,9 @@ def main(reference):
 
 
 
-    generate_mri_dataset_reference(reference, 'train_CN-AD', [[0],[1]], 'TRAIN', 'CORONAL', 43)
-    generate_mri_dataset_reference(reference, 'test_CN-AD', [[0],[1]], 'TEST', 'CORONAL', 43)
-    generate_mri_dataset_reference(reference, 'val_CN-AD', [[0],[1]], 'VAL', 'CORONAL', 43)
+    generate_mri_dataset_reference(reference, 'train_CN-BIGMCI-AD-timewindow', [[0],[4],[1]], 'TRAIN', 'CORONAL', 43)
+    generate_mri_dataset_reference(reference, 'test_CN-BIGMCI-AD-timewindow', [[0],[4],[1]], 'TEST', 'CORONAL', 43)
+    generate_mri_dataset_reference(reference, 'val_CN-BIGMCI-AD-timewindow', [[0],[4],[1]], 'VAL', 'CORONAL', 43)
 
 def generate_mri_dataset_reference(mri_reference_path,
                                 output_path,
@@ -43,9 +43,5 @@ def generate_mri_dataset_reference(mri_reference_path,
     df_mri_dataset['SLICE'] = orientation_slice
     df_mri_dataset.to_csv(output_path, index=False)
 
-    
-
-    print(df_mri_dataset)
-
-main('/Users/olath/Documents/GitHub/Master-thesis/reference_all_classes.csv')
+main('/Users/olath/Documents/GitHub/Master-thesis/reference_all_classes_timewindow_singular.csv')
     

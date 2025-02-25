@@ -60,10 +60,12 @@ class MRI_Dataset(Dataset):
                 X = self.transform(X) 
              
         else:
-            X = X.repeat(3, 1, 1)
-            
+
             if self.transform is not None:
                 X = self.transform(X) 
+
+            X = X.repeat(3, 1, 1)
+            
 
         X = X/X.max()
                               

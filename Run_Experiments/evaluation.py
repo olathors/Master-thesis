@@ -7,7 +7,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 from scipy.special import erfcinv
-from sklearn.metrics import roc_auc_score,roc_curve,auc, f1_score, precision_score, recall_score, accuracy_score, confusion_matrix, ConfusionMatrixDisplay
+import sklearn
+from sklearn.metrics import roc_auc_score,roc_curve,auc,f1_score, precision_score, recall_score, accuracy_score, confusion_matrix, ConfusionMatrixDisplay
 
 #from de_long_evaluation import delong_roc_test
 
@@ -48,9 +49,10 @@ def compute_metrics_binary(y_true, y_pred_proba, classes, threshold = 0.5, verbo
 
     y_true = get_numpy_array(y_true)
 
-
     if classes == 2:
-        auc = roc_auc_score(y_true, y_pred_label, labels = labels, average= 'weighted')
+        auc = roc_auc_score(y_true, y_pred_proba[:, 1], labels = labels, average= 'weighted')
+        fpr, tpr, thresholds = roc_curve(y_true, y_pred_proba[:, 1])
+        roc_auc = sklearn.metrics.auc(fpr, tpr)
     else:
         auc = roc_auc_score(y_true, y_pred_proba, labels = labels, multi_class="ovr", average= 'weighted')
     accuracy = accuracy_score(y_true, y_pred_label)
@@ -75,7 +77,8 @@ def compute_metrics_binary(y_true, y_pred_proba, classes, threshold = 0.5, verbo
         'f1score':f1score,
         'precision':precision,
         'recall':recall,
-        'conf_mat':conf_mat
+        'conf_mat':conf_mat,
+        'roc_auc': [roc_auc,fpr,tpr,thresholds]
     }
 
     

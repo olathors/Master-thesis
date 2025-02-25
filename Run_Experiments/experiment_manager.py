@@ -11,12 +11,12 @@ import pandas as pd
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import neptune
-from sklearn.metrics import ConfusionMatrixDisplay
+from sklearn.metrics import ConfusionMatrixDisplay, RocCurveDisplay
 
 import matplotlib.pyplot as plt
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-device = torch.device('mps' if torch.mps.is_available() else 'cpu')
+#device = torch.device('mps' if torch.mps.is_available() else 'cpu')
 
 from dataclasses import dataclass
 from evaluation import compute_metrics_binary
@@ -247,6 +247,7 @@ class ExperimentManager:
                     best_train_recall = train_metrics['recall']
                     best_validation_confmat = validation_metrics['conf_mat']
                     best_train_confmat = train_metrics['conf_mat']
+                    best_validaton_roc_curve = validation_metrics['roc_auc']
                     
 
                     early_stop_counter = 0
@@ -283,9 +284,14 @@ class ExperimentManager:
             self.run["results/final_epoch"] = epoch
 
             best_validation_confmat = ConfusionMatrixDisplay(best_validation_confmat)
-            #best_validation_confmat.plot().figure_.savefig('confusion_matrix.png')
             
             self.run["results/best_validation_confmat"].upload(best_validation_confmat.plot().figure_)
+
+            roc_auc, fpr, tpr, thresholds = best_validaton_roc_curve
+
+            best_roc_curve = RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc)
+
+            self.run["results/best_roc_curve"].upload(best_roc_curve.plot().figure_)
 
             
             
@@ -527,7 +533,7 @@ class ExperimentManager:
 
         if path is not None:
             model_save_path = os.path.join(path, f'model_{self.experiment_tag}_{tag}.pth')
-            torch.save(model.state_dict(), model_save_path)
+            torch.save(model, model_save_path)
         else:
             raise ValueError("Save directory path is None")
 

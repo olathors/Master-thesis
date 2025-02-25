@@ -6,6 +6,7 @@ import shutil
 import time
 from mri_preprocessed_fetch import get_preprocessed_imagenames
 
+
 def main(in_path, out_path, global_time):
 
     images_already_preprocessed = get_preprocessed_imagenames(out_path)
@@ -24,12 +25,12 @@ def main(in_path, out_path, global_time):
             elif (not file.startswith('._')):
 
                 total_images_to_slice = len(files)
-                slices = slice_image(in_path, file)
+                slices = slice_image(in_path, file, rescale = True)
                 image_name = file[:-7]        
 
-                os.makedirs('temp_slicing_folder'+'/saggital')
-                os.makedirs('temp_slicing_folder'+'/coronal')
-                os.makedirs('temp_slicing_folder'+'/axial')
+                os.makedirs(out_path+image_name+'/SAGITTAL/')
+                os.makedirs(out_path+image_name+'/CORONAL/')
+                os.makedirs(out_path+image_name+'/AXIAL/')
 
                 for i in range(0, 100):
 
@@ -37,19 +38,19 @@ def main(in_path, out_path, global_time):
                     arr *= 255.0/arr.max()
                     im = Image.fromarray(arr)
                     im = im.convert('L')
-                    im.save('temp_slicing_folder'+'/saggital/'+str(i)+'.png')
+                    im.save(out_path+image_name+'/SAGITTAL/'+str(i)+'.png')
 
                     arr = slices[1][i]
                     arr *= 255.0/arr.max()
                     im = Image.fromarray(arr)
                     im = im.convert('L')
-                    im.save('temp_slicing_folder'+'/coronal/'+str(i)+'.png')
+                    im.save(out_path+image_name+'/CORONAL/'+str(i)+'.png')
                     
                     arr = slices[2][i]
                     arr *= 255.0/arr.max()
                     im = Image.fromarray(arr)
                     im = im.convert('L')
-                    im.save('temp_slicing_folder'+'/axial/'+str(i)+'.png')
+                    im.save(out_path+image_name+'/AXIAL/'+str(i)+'.png')
 
                 total_images_sliced += 1
                 prev_percentage = percentage
@@ -60,9 +61,9 @@ def main(in_path, out_path, global_time):
                     time_remaining = (time_spent/percentage) * (100 - percentage)
                     print('Slicing images is %.0f' % percentage,'%','complete and will finish in %.2f' % time_remaining, 'minutes. ')
 
-                shutil.make_archive(out_path+image_name, 'zip', 'temp_slicing_folder')
-                shutil.rmtree('temp_slicing_folder')
+                #shutil.make_archive(out_path+image_name, root_dir= 'temp_slicing_folder')
+                #shutil.rmtree('temp_slicing_folder')
 
 global_time = time.time()
 
-main('/Volumes/Extreme SSD/ATLAS/', '/Volumes/Extreme SSD/ATLAS_SLICED/', global_time)
+main('/Volumes/Extreme SSD/ADNI_PROCESSED/', '/Users/olath/Documents/ADNI_SLICED_RESCALED/', global_time)

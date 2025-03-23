@@ -28,7 +28,9 @@ def image(shap_values: Explanation or np.ndarray,
           hspace: Optional[float] = 0.2,
           labelpad: Optional[float] = None,
           cmap: Optional[str or Colormap] = colors.red_transparent_blue,
-          show: Optional[bool] = True):
+          show: Optional[bool] = True,
+          title: Optional[str] = "Title"):
+    
     """Plots SHAP values for image inputs.
 
     Parameters
@@ -115,6 +117,8 @@ def image(shap_values: Explanation or np.ndarray,
     if fig_size[0] > width:
         fig_size *= width / fig_size[0]
     fig, axes = pl.subplots(nrows=x.shape[0], ncols=len(shap_values) + 1, figsize=fig_size)
+    pl.suptitle(title)
+
     if len(axes.shape) == 1:
         axes = axes.reshape(1, axes.size)
     for row in range(x.shape[0]):
@@ -157,9 +161,9 @@ def image(shap_values: Explanation or np.ndarray,
             abs_vals = np.stack([np.abs(shap_values[i].sum(-1)) for i in range(len(shap_values))], 0).flatten()
         max_val = np.nanpercentile(abs_vals, 99.9)
         for i in range(len(shap_values)):
-            if labels is not None:
-                axes[row, i + 1].set_title(labels[row, i], **label_kwargs)
             sv = shap_values[i][row] if len(shap_values[i][row].shape) == 2 else shap_values[i][row].sum(-1)
+            if labels is not None:
+                axes[row, i + 1].set_title(labels[row, i] + '\n SHAP sum: ' + str(sv.sum().round(4)), **label_kwargs)
             axes[row, i + 1].imshow(x_curr_gray, cmap=pl.get_cmap('gray'), alpha=0.5,
                                     extent=(-1, sv.shape[1], sv.shape[0], -1))
             im = axes[row, i + 1].imshow(sv, cmap=cmap, vmin=-max_val, vmax=max_val)

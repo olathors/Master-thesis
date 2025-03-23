@@ -1,7 +1,7 @@
 import ants
 import numpy as np
 
-def scale_image (corrected_image, atlas_image):
+def scale_image(corrected_image, atlas_image):
     
     '''
     Function for clipping outliers and scaling intensity of image to atlas.

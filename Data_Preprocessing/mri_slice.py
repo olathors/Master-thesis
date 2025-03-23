@@ -1,7 +1,7 @@
 import nibabel as nib
 import numpy as np
 from matplotlib import pyplot as plt
-from mri_scale import get_percentiles, clip_image_intensity
+from Data_Preprocessing.mri_scale import get_percentiles, clip_image_intensity
 
 def slice_image(path, image, rescale = False):
     

@@ -14,12 +14,13 @@ import neptune
 from sklearn.metrics import ConfusionMatrixDisplay, RocCurveDisplay
 
 import matplotlib.pyplot as plt
+from sklearn.metrics import roc_auc_score,roc_curve,auc,f1_score, precision_score, recall_score, accuracy_score, confusion_matrix, ConfusionMatrixDisplay, RocCurveDisplay, balanced_accuracy_score
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 #device = torch.device('mps' if torch.mps.is_available() else 'cpu')
 
 from dataclasses import dataclass
-from evaluation import compute_metrics_binary
+from evaluation import compute_metrics_binary, multiclass_curve
 
 @dataclass
 class ExperimentParameters:
@@ -81,6 +82,7 @@ class ExperimentParameters:
     alpha: Optional [int] = 0
     gamma: Optional [int] = 0
     weight: Optional[Any] = None
+    class_id: Optional[dict] = None
 
 
 class ExperimentManager:
@@ -119,6 +121,7 @@ class ExperimentManager:
 
         self.experiment_log = {}
         self.epoch_results = []
+        self.class_id = experiment_parameters.class_id
         self.pruning = experiment_parameters.pruning
 
         self.alpha = experiment_parameters.alpha
@@ -191,8 +194,8 @@ class ExperimentManager:
                 
                 validation_loss, validation_accuracy, val_y_true, val_y_pred_proba = self._evaluate(model, criterion, validation_loader)
 
-                train_metrics = compute_metrics_binary(train_y_true, train_y_pred_proba, self.classes)
-                validation_metrics = compute_metrics_binary(val_y_true, val_y_pred_proba, self.classes)
+                train_metrics = compute_metrics_binary(train_y_true, train_y_pred_proba, self.classes, self.class_id)
+                validation_metrics = compute_metrics_binary(val_y_true, val_y_pred_proba, self.classes, self.class_id)
 
                 if self.scheduler is not None:
                     scheduler.step(epoch - 1)
@@ -246,7 +249,7 @@ class ExperimentManager:
                     best_validation_recall = validation_metrics['recall']
                     best_train_recall = train_metrics['recall']
                     best_validation_confmat = validation_metrics['conf_mat']
-                    best_train_confmat = train_metrics['conf_mat']
+                    #best_train_confmat = train_metrics['conf_mat']
                     best_validaton_roc_curve = validation_metrics['roc_auc']
                     
 
@@ -284,14 +287,28 @@ class ExperimentManager:
             self.run["results/final_epoch"] = epoch
 
             best_validation_confmat = ConfusionMatrixDisplay(best_validation_confmat)
+
+            fig = best_validation_confmat.plot().figure_
             
-            self.run["results/best_validation_confmat"].upload(best_validation_confmat.plot().figure_)
+            self.run["results/best_validation_confmat"].upload(fig)
 
-            roc_auc, fpr, tpr, thresholds = best_validaton_roc_curve
+            plt.close(fig)
 
-            best_roc_curve = RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc)
+            y_true, y_pred_proba, threshold = best_validaton_roc_curve
 
-            self.run["results/best_roc_curve"].upload(best_roc_curve.plot().figure_)
+            self.run["results/optimal_threshold"] = threshold
+
+            if self.classes == 2:
+                fpr, tpr, thresholds = roc_curve(y_true, y_pred_proba[:, 1])
+                roc_auc = auc(fpr, tpr)
+                fig = RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc).plot().figure_
+
+            else:
+                fig = multiclass_curve(y_true, y_pred_proba, self.classes, self.class_id)
+
+            self.run["results/best_roc_curve"].upload(fig)
+
+            plt.close(fig)
 
             
             

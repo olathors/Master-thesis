@@ -130,6 +130,7 @@ class MBConv(nn.Module):
                     kernel_size=1,
                     norm_layer=norm_layer,
                     activation_layer=activation_layer,
+                    inplace= False,
                 )
             )
 
@@ -143,17 +144,18 @@ class MBConv(nn.Module):
                 groups=expanded_channels,
                 norm_layer=norm_layer,
                 activation_layer=activation_layer,
+                inplace= False,
             )
         )
 
         # squeeze and excitation
         squeeze_channels = max(1, cnf.input_channels // 4)
-        layers.append(se_layer(expanded_channels, squeeze_channels, activation=partial(nn.SiLU, inplace=True)))
+        layers.append(se_layer(expanded_channels, squeeze_channels, activation=partial(nn.SiLU, inplace=False)))
 
         # project
         layers.append(
             Conv2dNormActivation(
-                expanded_channels, cnf.out_channels, kernel_size=1, norm_layer=norm_layer, activation_layer=None
+                expanded_channels, cnf.out_channels, kernel_size=1, norm_layer=norm_layer, activation_layer=None, inplace= False
             )
         )
 
@@ -165,7 +167,7 @@ class MBConv(nn.Module):
         result = self.block(input)
         if self.use_res_connect:
             result = self.stochastic_depth(result)
-            result += input
+            result = result + input
         return result
 
 
@@ -197,13 +199,14 @@ class FusedMBConv(nn.Module):
                     stride=cnf.stride,
                     norm_layer=norm_layer,
                     activation_layer=activation_layer,
+                    inplace= False,
                 )
             )
 
             # project
             layers.append(
                 Conv2dNormActivation(
-                    expanded_channels, cnf.out_channels, kernel_size=1, norm_layer=norm_layer, activation_layer=None
+                    expanded_channels, cnf.out_channels, kernel_size=1, norm_layer=norm_layer, activation_layer=None,inplace= False
                 )
             )
         else:
@@ -215,6 +218,7 @@ class FusedMBConv(nn.Module):
                     stride=cnf.stride,
                     norm_layer=norm_layer,
                     activation_layer=activation_layer,
+                    inplace= False,
                 )
             )
 
@@ -226,7 +230,7 @@ class FusedMBConv(nn.Module):
         result = self.block(input)
         if self.use_res_connect:
             result = self.stochastic_depth(result)
-            result += input
+            result = result + input
         return result
 
 
@@ -271,7 +275,7 @@ class EfficientNet(nn.Module):
         firstconv_output_channels = inverted_residual_setting[0].input_channels
         layers.append(
             Conv2dNormActivation(
-                100, firstconv_output_channels, kernel_size=3, stride=2, norm_layer=norm_layer, activation_layer=nn.SiLU
+                3, firstconv_output_channels, kernel_size=3, stride=2, norm_layer=norm_layer, activation_layer=nn.SiLU, inplace= False
             )
         )
 
@@ -293,7 +297,7 @@ class EfficientNet(nn.Module):
                 sd_prob = stochastic_depth_prob * float(stage_block_id) / total_stage_blocks
 
                 stage.append(block_cnf.block(block_cnf, sd_prob, norm_layer))
-                stage_block_id += 1
+                stage_block_id = stage_block_id + 1
 
             layers.append(nn.Sequential(*stage))
 
@@ -307,13 +311,14 @@ class EfficientNet(nn.Module):
                 kernel_size=1,
                 norm_layer=norm_layer,
                 activation_layer=nn.SiLU,
+                inplace= False,
             )
         )
 
         self.features = nn.Sequential(*layers)
         self.avgpool = nn.AdaptiveAvgPool2d(1)
         self.classifier = nn.Sequential(
-            nn.Dropout(p=dropout, inplace=True),
+            nn.Dropout(p=dropout, inplace=False),
             nn.Linear(lastconv_output_channels, num_classes),
         )
 

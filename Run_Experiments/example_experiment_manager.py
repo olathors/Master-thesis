@@ -24,11 +24,13 @@ from loguru import logger
 from mri_dataset import MRI_Dataset
 from torch.utils.data import DataLoader
 
-from custom_efficientnet import CustomEfficientnet
-from torchvision.models.efficientnet import _efficientnet_conf
+#from custom_efficientnet import CustomEfficientnet
+from torchvision.models.efficientnet import _efficientnet_conf, efficientnet_v2_l, efficientnet_v2_s, EfficientNet_V2_M_Weights, EfficientNet_V2_S_Weights
 from torchvision.transforms import functional, RandAugment
 
 from customloss import FocalLoss
+from combined_classifier import CombinedClassifierL
+#import custom_efficientnet
 
 #%load_ext autoreload
 #%autoreload 2
@@ -58,57 +60,61 @@ def main():
 
     # Running EfficientNet
     optimizer = torch.optim.Adam
-    criterion = FocalLoss
+    criterion = torch.nn.CrossEntropyLoss
     batch_size = 16
-    learning_rate = 0.0000001
-    epochs = 200
+    learning_rate = 0.00001
+    epochs = 1
     early_stopping_epochs = 25
-    experiment_tag = "3class"
-    dataset_tag = "AD/BIGMCI/CD"
-    model_tag="EfficientnetV2M"
-    num_classes = 3
-    weights_imagenet = torchvision.models.EfficientNet_V2_M_Weights.DEFAULT
-    transform_magnitude = 3
-    transform_num_ops = 2
-    alpha = [0.5, 0.1, 0.4]
-    gamma = 2
+    experiment_tag = "4class"
+    dataset_tag = "AD/sMCI/pMCI/CD"
+    model_tag="EfficientnetV2L"
+    num_classes = 2
+    weights_imagenet = EfficientNet_V2_S_Weights.DEFAULT
+    transform_magnitude = 14
+    transform_num_ops = 4
+    alpha = 0
+    gamma = 0
     weight = None
 
 
     transform = RandAugment(magnitude = transform_magnitude, num_ops = transform_num_ops)
 
-    train_dataset = MRI_Dataset('/Users/olath/Documents/GitHub/Master-thesis/train_CN-BIGMCI-AD-timewindow','/Users/olath/Documents/ADNI_SLICED/', transform, triple = False) 
-    #test_dataset = MRI_Dataset('/Users/olath/Documents/GitHub/Master-thesis/test')
-    val_dataset = MRI_Dataset('/Users/olath/Documents/GitHub/Master-thesis/val_CN-BIGMCI-AD-timewindow','/Users/olath/Documents/ADNI_SLICED/', triple = False)
+    train_dataset = MRI_Dataset('/Users/olath/Documents/GitHub/Master-thesis/Datasets/train-sMCI-pMCI','/Users/olath/Documents/ADNI_SLICED_RESCALED/', transform=transform, slice= 6, orientation= 'AXIAL') 
+    val_dataset = MRI_Dataset('/Users/olath/Documents/GitHub/Master-thesis/Datasets/val-sMCI-pMCI','/Users/olath/Documents/ADNI_SLICED_RESCALED/', slice= 6, orientation= 'AXIAL')
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0)
-    validation_loader  = DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=0)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    validation_loader  = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
+    """
+    axial = efficientnet_v2_l(num_classes = 4)
+    axial.load_state_dict(torch.load('/Users/olath/Downloads/model_12AXIAL_202502281555_best.pth', weights_only=True, map_location=torch.device('mps')))
+    sagittal = efficientnet_v2_l(num_classes = 4)
+    sagittal.load_state_dict(torch.load('/Users/olath/Downloads/model_72SAGITTAL_202502281601_best.pth', weights_only=True, map_location=torch.device('mps')))
+    coronal = efficientnet_v2_l(num_classes = 4)
+    coronal.load_state_dict(torch.load('/Users/olath/Downloads/model_43CORONAL_202502281527_best.pth', weights_only=True, map_location=torch.device('mps')))
+    
 
-    model = torchvision.models.efficientnet_v2_m(weights=weights_imagenet)
+    model = CombinedClassifier(4, axial, sagittal, coronal)
+    """
 
-    if weights_imagenet is not None:
+    model  = efficientnet_v2_s(weights = torchvision.models.EfficientNet_V2_S_Weights.DEFAULT)
 
-        #Dropout for s model = 0.2
-        #Dropout for m model = 0.3, and linear layer in is 1280.
-        #Dropout for l model = 0.4
+    for param in model.parameters():
+        param.requires_grad = False
 
-        dropout = 0.3
-        linear_in = 1280
+    model.classifier = nn.Sequential(
+    #nn.BatchNorm1d(num_features=1280),    
+    nn.Linear(1280, 2),
+    #nn.ReLU(),
+    #nn.BatchNorm1d(512),
+    #nn.Linear(512, 128),
+    #nn.ReLU(),
+    #nn.BatchNorm1d(num_features=128),
+    #nn.Dropout(0.4),
+    #nn.Linear(128, 2),
+    )
 
-        model.classifier= torch.nn.Sequential(
-                    torch.nn.Dropout(p=dropout, inplace=True),
-                    torch.nn.Linear(linear_in, num_classes),
-                )
-        """
-        for param in model.parameters():
-            param.requires_grad = False
 
-        for param in model.classifier.parameters():
-            param.requires_grad = True
-        
-        """
     model_params = None
-
     experiment_params = ExperimentParameters(
         model=model,
         model_params=model_params,
@@ -125,7 +131,8 @@ def main():
         classes = num_classes,
         alpha= alpha,
         gamma = gamma,
-        weight = weight
+        weight = weight,
+        class_id = {0:'sMCI',1:'pMCI'} 
     )
 
     experiment_manager = ExperimentManager(experiment_parameters=experiment_params)

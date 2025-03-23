@@ -28,13 +28,13 @@ def main():
     #Non existant images
     bad_images.extend([396649, 397160, 500905, 500906])
 
-    create_reference_file_patients(split, dicts, bad_images)
+    create_reference_file_patients(split, dicts, bad_images, multiple = False, onlyfirst = False)
     
-def create_reference_file_patients(split, dicts, bad_images, multiple = False):
+def create_reference_file_patients(split, dicts, bad_images, multiple = False, onlyfirst = False):
 
     train_split, test_split, val_split = split
 
-    with open('reference_all_classes_timewindow_singular.csv', 'w', newline='') as csvfile:
+    with open('Datasets/reference_all_classes_timewindow_singular.csv', 'w', newline='') as csvfile:
         writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
         writer.writerow(['IMAGE_ID','PATIENT_ID','CLASS','TYPE'])
 
@@ -53,6 +53,8 @@ def create_reference_file_patients(split, dicts, bad_images, multiple = False):
                                 writer.writerow([str(image),str(patient), i, 'TRAIN'])
                             if not multiple:
                                 break
+                    if onlyfirst:
+                        break
                             
 
             for patient in test:
@@ -63,6 +65,8 @@ def create_reference_file_patients(split, dicts, bad_images, multiple = False):
                                 writer.writerow([str(image),str(patient), i, 'TEST'])
                             if not multiple:
                                 break
+                    if onlyfirst:
+                        break
                             
 
             for patient in val:
@@ -74,6 +78,8 @@ def create_reference_file_patients(split, dicts, bad_images, multiple = False):
                                 writer.writerow([str(image),str(patient), i, 'VAL'])
                             if not multiple:
                                 break
+                    if onlyfirst:
+                        break
                             
 
 

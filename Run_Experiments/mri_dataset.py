@@ -40,7 +40,7 @@ class MRI_Dataset(Dataset):
         sample = self.reference_table.iloc[idx]
 
          
-        image_path = (self.img_dir + str(sample['IMAGE_ID']) +'/'+ str(sample['ORIENTATION']).lower() +'/'+ str(sample['SLICE']) + '.png')
+        image_path = (self.img_dir + str(sample['IMAGE_ID']) +'/'+ str(sample['ORIENTATION']) +'/'+ str(sample['SLICE']) + '.png')
         
 
         y = sample['CLASS']

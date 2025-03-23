@@ -168,3 +168,4 @@ Data_Experimentation/temp_folder/
 *.png
 
 .neptune/*
+*.npy

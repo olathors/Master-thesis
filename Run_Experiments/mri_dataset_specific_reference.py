@@ -4,9 +4,9 @@ def main(reference):
 
 
 
-    generate_mri_dataset_reference(reference, 'Datasets/train-CN-allMCI-AD', [[0],[4],[1]], 'TRAIN', 'CORONAL', 43)
-    generate_mri_dataset_reference(reference, 'Datasets/test-CN-allMCI-AD', [[0],[4],[1]], 'TEST', 'CORONAL', 43)
-    generate_mri_dataset_reference(reference, 'Datasets/val-CN-allMCI-AD', [[0],[4],[1]], 'VAL', 'CORONAL', 43)
+    generate_mri_dataset_reference(reference, 'Datasets/train-CN-sMCI-pMCI-AD-crossval', [[0],[2],[3],[1]], 'TRAIN')
+    generate_mri_dataset_reference(reference, 'Datasets/test-CN-sMCI-pMCI-AD-crossval', [[0],[2],[3],[1]], 'TEST')
+    #generate_mri_dataset_reference(reference, 'Datasets/val-CN-sMCI-pMCI-AD-run_1', [[0],[1],[2],[3]], 'VAL')
 
 def generate_mri_dataset_reference(mri_reference_path,
                                 output_path,
@@ -35,6 +35,16 @@ def generate_mri_dataset_reference(mri_reference_path,
             df_mri_dataset_temp2['CLASS'] = label_counter
             df_mri_dataset_temp = pd.concat([df_mri_dataset_temp, df_mri_dataset_temp2])
 
+        elif (len(label) == 3):
+
+            df_mri_dataset_temp2 = df_mri_reference.query("CLASS == @label[1] and TYPE == @type")
+            df_mri_dataset_temp2['CLASS'] = label_counter
+
+            df_mri_dataset_temp3 = df_mri_reference.query("CLASS == @label[2] and TYPE == @type")
+            df_mri_dataset_temp3['CLASS'] = label_counter
+
+            df_mri_dataset_temp = pd.concat([df_mri_dataset_temp, df_mri_dataset_temp2, df_mri_dataset_temp3])
+
         temp_sets[label_counter] = df_mri_dataset_temp
         label_counter += 1
 
@@ -43,5 +53,5 @@ def generate_mri_dataset_reference(mri_reference_path,
     #df_mri_dataset['SLICE'] = orientation_slice
     df_mri_dataset.to_csv(output_path, index=False)
 
-main('/Users/olath/Documents/GitHub/Master-thesis/Datasets/reference_all_classes_timewindow_singular.csv')
+main('/Users/olath/Documents/GitHub/Master-thesis/Datasets/reference_all_classes_run_crossval.csv')
     

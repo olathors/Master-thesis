@@ -66,4 +66,4 @@ def main(in_path, out_path, global_time):
 
 global_time = time.time()
 
-main('/Volumes/Extreme SSD/ADNI_PROCESSED/', '/Users/olath/Documents/ADNI_SLICED_RESCALED/', global_time)
+main('//Users/olath/Documents/Preprocessing_steps_noscale/', '/Users/olath/Documents/Preprocessing_steps_noscale_sliced/', global_time)

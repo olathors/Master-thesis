@@ -6,7 +6,7 @@ from mri_scale import scale_image
 from mri_register import register_image
 from mri_crop import crop_image
 
-def preprocess_image(in_path, out_path, image_name, atlas_image):
+def preprocess_image(in_path, out_path, image_name, atlas_image, save_steps = False):
 
     '''
     Function for preprocessing a single image and saving it to the output directory.
@@ -28,17 +28,27 @@ def preprocess_image(in_path, out_path, image_name, atlas_image):
 
     corrected_image = convert_and_correct(in_path, image_name)
 
+    if save_steps:
+        ants.image_write(corrected_image,out_path + image_name + 'corrected' +'.nii.gz')
+
     #Scales the input image according to the atlas, mostly stolen from Lucas
 
-    scaled_image = scale_image(corrected_image, atlas_image)
+    #scaled_image = scale_image(corrected_image, atlas_image)
+
+    #if save_steps:
+    #    ants.image_write(scaled_image,out_path + image_name + 'scaled' +'.nii.gz')
 
     #Executes registration of the input image to the atlas image.
 
-    registered_image = register_image(scaled_image, atlas_image)
+    registered_image = register_image(corrected_image, atlas_image)
+
+    if save_steps:
+        ants.image_write(registered_image,out_path + image_name + 'registered' +'.nii.gz')
 
     #Crops the input image to 100x100x100.
     
     cropped_image = crop_image(registered_image)
+    
 
     #Writes the preprocessed input image as a NIFTI image.
 

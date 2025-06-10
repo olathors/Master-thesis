@@ -17,7 +17,7 @@ def main():
     mci_dict_with_images = np.load("/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/data/mci_dict_with_images_timewindow.npy",allow_pickle='TRUE').item()
 
 
-    dicts = [cn_dict_with_images, ad_dict_with_images, smci_dict_with_images, pmci_dict_with_images, mci_dict_with_images]
+    dicts = [cn_dict_with_images, ad_dict_with_images, smci_dict_with_images, pmci_dict_with_images]
 
     split = [0.6, 0.2, 0.2]
 
@@ -34,7 +34,7 @@ def create_reference_file_patients(split, dicts, bad_images, multiple = False, o
 
     train_split, test_split, val_split = split
 
-    with open('Datasets/reference_all_classes_timewindow_singular.csv', 'w', newline='') as csvfile:
+    with open('Datasets/reference_all_classes_crossval_test.csv', 'w', newline='') as csvfile:
         writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
         writer.writerow(['IMAGE_ID','PATIENT_ID','CLASS','TYPE'])
 

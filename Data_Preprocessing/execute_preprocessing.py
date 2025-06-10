@@ -6,6 +6,7 @@ import time
 import zipfile
 import shutil
 import os
+import sys
 
 def main(in_data, images, out_path, global_time, process_no):
 
@@ -55,6 +56,8 @@ def main(in_data, images, out_path, global_time, process_no):
 
             try:
                 #Folder to store extracted dcm series.
+                if os.path.exists('temp_folder'):
+                    shutil.rmtree('temp_folder')
                 os.makedirs('temp_folder')
 
                 for file in raw_image_archive.namelist():                 
@@ -62,12 +65,15 @@ def main(in_data, images, out_path, global_time, process_no):
                         raw_image_archive.extract(file, 'temp_folder')
 
                 #Executes the preprocessing
-                preprocess_image('temp_folder', out_path, str(key), atlas_image)
+                preprocess_image('temp_folder', out_path, str(key), atlas_image, save_steps= True)
 
             except Exception as err:
                 logf = open("conversion.log", "a")
                 logf.write(("Failed to convert {0}: {1}\n".format(str(key), str(err))))
                 logf.close()
+                exc_type, exc_obj, exc_tb = sys.exc_info()
+                fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                print(exc_type, fname, exc_tb.tb_lineno)
     
             #Metrics
             images_preprocessed_counter += 1
@@ -88,7 +94,7 @@ def main(in_data, images, out_path, global_time, process_no):
 
 in_path = '/Volumes/Extreme SSD/Download/Download_collection_dataset.zip'
 image_list_path = "/Users/olath/Documents/GitHub/Master-thesis/Data_Experimentation/images_paths/images_with_paths_file_9.npy"
-out_path = '/Volumes/Extreme SSD/ADNI_PROCESSED/'
+out_path = '/Users/olath/Documents/Preprocessing_steps_noscale/'
 
 global_time = time.time()
 

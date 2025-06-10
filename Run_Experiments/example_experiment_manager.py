@@ -84,34 +84,7 @@ def main():
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     validation_loader  = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
-    """
-    axial = efficientnet_v2_l(num_classes = 4)
-    axial.load_state_dict(torch.load('/Users/olath/Downloads/model_12AXIAL_202502281555_best.pth', weights_only=True, map_location=torch.device('mps')))
-    sagittal = efficientnet_v2_l(num_classes = 4)
-    sagittal.load_state_dict(torch.load('/Users/olath/Downloads/model_72SAGITTAL_202502281601_best.pth', weights_only=True, map_location=torch.device('mps')))
-    coronal = efficientnet_v2_l(num_classes = 4)
-    coronal.load_state_dict(torch.load('/Users/olath/Downloads/model_43CORONAL_202502281527_best.pth', weights_only=True, map_location=torch.device('mps')))
     
-
-    model = CombinedClassifier(4, axial, sagittal, coronal)
-    """
-
-    model  = efficientnet_v2_s(weights = torchvision.models.EfficientNet_V2_S_Weights.DEFAULT)
-
-    for param in model.parameters():
-        param.requires_grad = False
-
-    model.classifier = nn.Sequential(
-    #nn.BatchNorm1d(num_features=1280),    
-    nn.Linear(1280, 2),
-    #nn.ReLU(),
-    #nn.BatchNorm1d(512),
-    #nn.Linear(512, 128),
-    #nn.ReLU(),
-    #nn.BatchNorm1d(num_features=128),
-    #nn.Dropout(0.4),
-    #nn.Linear(128, 2),
-    )
 
 
     model_params = None

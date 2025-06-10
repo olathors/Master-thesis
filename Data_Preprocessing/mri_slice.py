@@ -1,21 +1,21 @@
 import nibabel as nib
 import numpy as np
 from matplotlib import pyplot as plt
-from Data_Preprocessing.mri_scale import get_percentiles, clip_image_intensity
+#from Data_Preprocessing.mri_scale import get_percentiles, clip_image_intensity
 
 def slice_image(path, image, rescale = False):
     
     img_nifti = nib.load(path + image)
 
     img = np.array(img_nifti.dataobj)
-
+    """
     if rescale:
 
         lower_threshold, upper_threshold = get_percentiles(img,0.3,99.7)
 
         img = clip_image_intensity(img.copy(), 0, upper_threshold)
 
-    """
+    
     if img.shape != (100, 100, 100):
 
         center_dim = [int(np.ceil(x/2)) for x in img.shape]

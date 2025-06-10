@@ -10,13 +10,13 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 from scipy.special import erfcinv
 import sklearn
-from sklearn.metrics import roc_auc_score,roc_curve,auc,f1_score, precision_score, recall_score, accuracy_score, confusion_matrix, ConfusionMatrixDisplay, RocCurveDisplay, balanced_accuracy_score
+from sklearn.metrics import roc_auc_score,roc_curve,auc,f1_score, precision_score, recall_score, accuracy_score, confusion_matrix, ConfusionMatrixDisplay, RocCurveDisplay, balanced_accuracy_score, top_k_accuracy_score
 
 #from de_long_evaluation import delong_roc_test
 
 
 
-def compute_metrics_binary(y_true, y_pred_proba, classes, class_id, threshold = 0.5, verbose=0):
+def compute_metrics_binary(y_true, y_pred_proba, classes, class_id = None, threshold = 0.5, verbose=0, pred_labels = None):
     '''
     
     Compute the following metrics for a binary classification problem: 
@@ -61,35 +61,61 @@ def compute_metrics_binary(y_true, y_pred_proba, classes, class_id, threshold = 
         #best_roc_curve = RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc).plot().figure_
     else:
         auc = roc_auc_score(y_true, y_pred_proba, labels = labels, multi_class="ovr", average= 'macro')
+        auc_perclass = roc_auc_score(y_true, y_pred_proba, labels = labels, multi_class="ovr", average= None)
         y_pred_label = np.argmax(y_pred_proba, 1)
         optimal_threshold = threshold
         #best_roc_curve = multiclass_curve(y_true, y_pred_proba, classes, class_id)
 
+    if pred_labels is not None:
+        y_pred_label = list(map(int, pred_labels))
+
 
     accuracy = accuracy_score(y_true, y_pred_label)
+    #top_1_accuracy = top_k_accuracy_score(y_true, y_pred_proba, k = 1, labels= labels)
+    top_2_accuracy = top_k_accuracy_score(y_true, y_pred_proba, k = 2, labels= labels)
+    #top_3_accuracy = top_k_accuracy_score(y_true, y_pred_proba, k = 3, labels= labels)
+    #balanced_accuracy = balanced_accuracy_score(y_true, y_pred_label)
+    #balanced_accuracy_adjusted = balanced_accuracy_score(y_true, y_pred_label, adjusted= True)
     f1score = f1_score(y_true, y_pred_label, labels = labels, average= 'macro')
+    f1_perclass = f1_score(y_true, y_pred_label, labels = labels, average= None)
     recall = recall_score(y_true, y_pred_label, labels = labels, average= 'macro')
+    recall_perclass = recall_score(y_true, y_pred_label, labels = labels, average= None)
     precision = precision_score(y_true, y_pred_label, labels = labels, average= 'macro', zero_division = 0)
+    precision_perclass = precision_score(y_true, y_pred_label, labels = labels, average= None, zero_division = 0)
     conf_mat = confusion_matrix(y_true, y_pred_label, labels = labels)
 
     if verbose > 0:
-        print('----------------')
+        print('---------------------')
         print("Total samples in batch:",y_true.shape)
         print("AUC:       %1.3f" % auc)
         print("Accuracy:  %1.3f" % accuracy)
         print("F1:        %1.3f" % f1score)
         print("Precision: %1.3f" % precision)
         print("Recall:    %1.3f" % recall)
-        print("Confusion Matrix: \n", conf_mat)
-        print('----------------')
+        print('--Additional metrics--')
+        #print("Top 1 Accuracy:  %1.3f" % top_1_accuracy)
+        print("Top 2 Accuracy:  %1.3f" % top_2_accuracy)
+        #print("Top 3 Accuracy:  %1.3f" % top_3_accuracy)
+        #print("Balanced Accuracy:  %1.3f" % balanced_accuracy)
+        #print("Adjusted Balanced Accuracy:  %1.3f" % balanced_accuracy_adjusted)
+        print('---------------------')
     metrics = {
         'auc':auc,
+        'auc_perclass': auc_perclass,
         'accuracy':accuracy,
         'f1score':f1score,
         'precision':precision,
         'recall':recall,
         'conf_mat':conf_mat,
-        'roc_auc': [y_true, y_pred_proba, optimal_threshold]
+        'roc_auc': [y_true, y_pred_proba],
+        #'top_1': top_1_accuracy,
+        'top_2' : top_2_accuracy,
+        #'top_3' : top_3_accuracy,
+        #'bal' : balanced_accuracy,
+        #'bal_adj' : balanced_accuracy_adjusted
+        'f1_perclass': f1_perclass,
+        'recall_perclass': recall_perclass,
+        'precision_perclass': precision_perclass
     }
 
     
@@ -102,7 +128,7 @@ def get_numpy_array(arr):
         return np.array(arr)
     return arr
 
-def multiclass_curve(y_true, y_score, n_classes, target_names):
+def multiclass_curve(y_true, y_score, n_classes, target_names, name):
     #This function is from sklearn website.
 
     label_binarizer = sklearn.preprocessing.LabelBinarizer()
@@ -138,7 +164,7 @@ def multiclass_curve(y_true, y_score, n_classes, target_names):
         fpr["micro"],
         tpr["micro"],
         label=f"micro-average ROC curve (AUC = {roc_auc['micro']:.3f})",
-        color="deeppink",
+        #color="deeppink",
         linestyle=":",
         linewidth=4,
     )
@@ -147,7 +173,7 @@ def multiclass_curve(y_true, y_score, n_classes, target_names):
         fpr["macro"],
         tpr["macro"],
         label=f"macro-average ROC curve (AUC = {roc_auc['macro']:.3f})",
-        color="navy",
+        #color="navy",
         linestyle=":",
         linewidth=4,
     )
@@ -158,19 +184,19 @@ def multiclass_curve(y_true, y_score, n_classes, target_names):
             y_onehot_test[:, class_id],
             y_score[:, class_id],
             name=f"ROC curve for {target_names[class_id]}",
-            color=color,
+            #color=color,
             ax=ax,
-            plot_chance_level=(class_id == 1),
+            #plot_chance_level=(class_id == 1),
             #despine=True,
         )
 
     _ = ax.set(
         xlabel="False Positive Rate",
         ylabel="True Positive Rate",
-        title="Extension of Receiver Operating Characteristic\nto One-vs-Rest multiclass",
+        title="One-vs-Rest Multiclass ROC Curves for " + name + ".",
     )
 
-    return fig
+    return fig, ax
 
 def find_optimal_cutoff(fpr, tpr, thresholds):
     """ 

@@ -46,50 +46,49 @@ Because of some compatability problems, the pre-processing pipeline was run in a
 
 Python version 3.11.10
 
-Package                      Version
----------------------------- ---------
-antspyx                      0.5.4
-dicom2nifti                  2.5.0
-itk                          5.4.0
-itk-core                     5.4.0
-itk-filtering                5.4.0
-itk-io                       5.4.0
-itk-numerics                 5.4.0
-itk-registration             5.4.0
-itk-segmentation             5.4.0
-keras                        2.12.0
-matplotlib                   3.9.2
-matplotlib-inline            0.1.7
-nibabel                      5.3.2
-numpy                        2.1.3
-pandas                       2.2.3
-pillow                       11.0.0
-pip                          24.3.1
+Packages and versions:
+
+- antspyx                      0.5.4
+- dicom2nifti                  2.5.0
+- itk                          5.4.0
+- itk-core                     5.4.0
+- itk-filtering                5.4.0
+- itk-io                       5.4.0
+- itk-numerics                 5.4.0
+- itk-registration             5.4.0
+- itk-segmentation             5.4.0
+- keras                        2.12.0
+- matplotlib                   3.9.2
+- matplotlib-inline            0.1.7
+- nibabel                      5.3.2
+- numpy                        2.1.3
+- pandas                       2.2.3
+- pillow                       11.0.0
+- pip                          24.3.1
 
 All other scripts were run in another virtual environment. The python packages and corresponding versions used for this envorionment are as follows:
 
 Python version 3.12.7
 
-Package                           Version
---------------------------------- ------------------
+Packages and versions:
 
-keras                             3.7.0
-matplotlib                        3.9.2
-matplotlib-inline                 0.1.6
-neptune                           1.13.0
-nibabel                           5.3.2
-numpy                             1.26.4
-opencv-python                     4.11.0.86
-pandas                            2.2.2
-pillow                            10.4.0
-pip                               24.2
-scikit-image                      0.24.0
-scikit-learn                      1.5.1
-scipy                             1.13.1
-seaborn                           0.13.2
-shap                              0.46.0
-tensorboard                       2.18.0
-tensorflow                        2.18.0
-torch                             2.6.0
-torchvision                       0.21.0
-tqdm                              4.66.5
+- keras                             3.7.0
+- matplotlib                        3.9.2
+- matplotlib-inline                 0.1.6
+- neptune                           1.13.0
+- nibabel                           5.3.2
+- numpy                             1.26.4
+- opencv-python                     4.11.0.86
+- pandas                            2.2.2
+- pillow                            10.4.0
+- pip                               24.2
+- scikit-image                      0.24.0
+- scikit-learn                      1.5.1
+- scipy                             1.13.1
+- seaborn                           0.13.2
+- shap                              0.46.0
+- tensorboard                       2.18.0
+- tensorflow                        2.18.0
+- torch                             2.6.0
+- torchvision                       0.21.0
+- tqdm                              4.66.5
